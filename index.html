@@ -216,6 +216,16 @@
             const activeBtn = document.getElementById(`btn-${tabId}`);
             activeBtn.classList.remove('text-slate-400', 'hover:text-white', 'hover:bg-slate-800');
             activeBtn.classList.add('bg-accent', 'text-white');
+
+            // Tự động kích hoạt vẽ lại Mermaid khi người dùng bấm vào tab Markdown
+            if (tabId === 'markdown') {
+                const iframe = document.querySelector('#tab-markdown iframe');
+                if (iframe && iframe.contentWindow && typeof iframe.contentWindow.renderMarkdown === 'function') {
+                    setTimeout(() => {
+                        iframe.contentWindow.renderMarkdown();
+                    }, 150);
+                }
+            }
         }
 
         function playGame(gamePath) {

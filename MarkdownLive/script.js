@@ -385,3 +385,5 @@ window.addEventListener('DOMContentLoaded', () => {
     lucide.createIcons(); // Vẽ các icon từ Lucide
     loadDefaultContent();
 });
+
+window.renderMarkdown = renderMarkdown;
