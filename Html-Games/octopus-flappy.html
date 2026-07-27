@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
+<title>Bạch Tuộc Vũ Trụ — Flappy Octopus</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&display=swap');
+
+  :root{
+    --deep:      #070818;
+    --nebula1:   #1b1240;
+    --nebula2:   #3a1c6e;
+    --pink:      #ff6ec7;
+    --cyan:      #4be3ff;
+    --gold:      #ffe29a;
+    --ink:       #f4f0ff;
+  }
+
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+
+  html,body{
+    margin:0; height:100%; overflow:hidden;
+    background: radial-gradient(ellipse at 50% -10%, #241255 0%, var(--deep) 55%, #020208 100%);
+    font-family:'Baloo 2','Trebuchet MS',sans-serif;
+    color:var(--ink);
+    display:flex; align-items:center; justify-content:center;
+    touch-action: manipulation;
+  }
+
+  #stage{
+    position:relative;
+    width:min(94vw, 430px);
+    aspect-ratio: 400 / 650;
+    border-radius:20px;
+    overflow:hidden;
+    box-shadow:
+      0 0 0 1px rgba(255,255,255,0.06),
+      0 0 40px rgba(120,60,255,0.35),
+      0 20px 60px rgba(0,0,0,0.6);
+    background:var(--deep);
+    user-select:none;
+  }
+
+  canvas{
+    display:block;
+    width:100%;
+    height:100%;
+  }
+
+  .hud{
+    position:absolute; top:0; left:0; right:0;
+    display:flex; justify-content:space-between; align-items:flex-start;
+    padding:14px 16px;
+    pointer-events:none;
+    z-index:5;
+  }
+  .pill{
+    background:rgba(10,6,30,0.55);
+    border:1px solid rgba(255,255,255,0.12);
+    backdrop-filter: blur(3px);
+    padding:6px 14px;
+    border-radius:999px;
+    font-weight:700;
+    font-size:15px;
+    letter-spacing:0.5px;
+    color:var(--ink);
+    text-shadow:0 0 8px rgba(75,227,255,0.6);
+  }
+  .pill.best{ color:var(--gold); text-shadow:0 0 8px rgba(255,226,154,0.6);}
+
+  .soundBtn{
+    pointer-events:all;
+    cursor:pointer;
+    border:1px solid rgba(255,255,255,0.12);
+    background:rgba(10,6,30,0.55);
+    backdrop-filter: blur(3px);
+    width:34px; height:34px;
+    border-radius:999px;
+    font-size:16px;
+    display:flex; align-items:center; justify-content:center;
+    color:var(--ink);
+    transition:transform .1s ease, background .15s ease;
+  }
+  .soundBtn:active{ transform:scale(0.9); }
+
+  .overlay{
+    position:absolute; inset:0;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:14px;
+    text-align:center;
+    padding:30px;
+    background:
+      radial-gradient(circle at 50% 30%, rgba(90,40,180,0.35), transparent 60%),
+      rgba(4,3,15,0.55);
+    backdrop-filter: blur(2px);
+    z-index:10;
+    transition:opacity .25s ease;
+  }
+  .overlay.hidden{ display:none; }
+
+  .title{
+    font-size:clamp(26px, 7.5vw, 34px);
+    font-weight:800;
+    color:var(--ink);
+    text-shadow:0 0 18px rgba(255,110,199,0.8), 0 0 4px #fff;
+    line-height:1.15;
+    margin:0;
+  }
+  .subtitle{
+    font-size:15px;
+    font-weight:500;
+    color:#cfc7ff;
+    opacity:0.9;
+    max-width:280px;
+    margin:0;
+  }
+
+  .btn{
+    margin-top:6px;
+    padding:12px 30px;
+    font-family:inherit;
+    font-size:18px;
+    font-weight:700;
+    color:#1a0a33;
+    background:linear-gradient(180deg,#ffe29a, #ff9fd6 70%, var(--pink));
+    border:none;
+    border-radius:999px;
+    cursor:pointer;
+    box-shadow:0 6px 0 #a8478e, 0 10px 20px rgba(255,110,199,0.35);
+    transform:translateY(0);
+    transition:transform .08s ease, box-shadow .08s ease;
+    pointer-events:all;
+  }
+  .btn:active{
+    transform:translateY(4px);
+    box-shadow:0 2px 0 #a8478e, 0 4px 10px rgba(255,110,199,0.3);
+  }
+
+  .octoIcon{
+    font-size:54px;
+    filter:drop-shadow(0 0 14px rgba(255,110,199,0.8));
+    animation:bob 2.2s ease-in-out infinite;
+  }
+  @keyframes bob{
+    0%,100%{ transform:translateY(0) rotate(-4deg); }
+    50%{ transform:translateY(-10px) rotate(4deg); }
+  }
+
+  .scoreRow{ display:flex; gap:18px; font-size:16px; font-weight:700; color:var(--cyan); }
+  .scoreRow b{ color:var(--gold); }
+
+  .hint{
+    font-size:12.5px;
+    color:#a99bd6;
+    margin-top:2px;
+  }
+</style>
+</head>
+<body>
+
+<div id="stage">
+  <canvas id="game"></canvas>
+
+  <div class="hud">
+    <div class="pill" id="scorePill">0</div>
+    <div style="display:flex; align-items:center; gap:8px;">
+      <div class="pill best" id="bestPill">🏆 0</div>
+      <button class="soundBtn" id="soundBtn" aria-label="Bật/tắt âm thanh">🔊</button>
+    </div>
+  </div>
+
+  <div class="overlay" id="startOverlay">
+    <div class="octoIcon">🐙</div>
+    <h1 class="title">Bạch Tuộc<br>Vũ Trụ</h1>
+    <p class="subtitle">Chạm hoặc nhấn <b>SPACE</b> để giúp bạch tuộc bơi qua các tinh thể vũ trụ!</p>
+    <button class="btn" id="startBtn">Bắt đầu bay</button>
+    <p class="hint">Chạm màn hình / Click / phím Space</p>
+  </div>
+
+  <div class="overlay hidden" id="overOverlay">
+    <div class="octoIcon" style="animation:none; filter:grayscale(0.3) drop-shadow(0 0 14px rgba(255,110,199,0.5));">💫</div>
+    <h1 class="title">Va chạm!</h1>
+    <div class="scoreRow">
+      <span>Điểm: <b id="finalScore">0</b></span>
+      <span>Kỷ lục: <b id="finalBest">0</b></span>
+    </div>
+    <button class="btn" id="retryBtn">Chơi lại</button>
+  </div>
+</div>
+
+<script>
+(function(){
+  const canvas = document.getElementById('game');
+  const ctx = canvas.getContext('2d');
+
+  // logical resolution
+  const W = 400, H = 650;
+  canvas.width = W;
+  canvas.height = H;
+
+  const startOverlay = document.getElementById('startOverlay');
+  const overOverlay   = document.getElementById('overOverlay');
+  const scorePill     = document.getElementById('scorePill');
+  const bestPill      = document.getElementById('bestPill');
+  const finalScoreEl  = document.getElementById('finalScore');
+  const finalBestEl   = document.getElementById('finalBest');
+  const startBtn      = document.getElementById('startBtn');
+  const retryBtn      = document.getElementById('retryBtn');
+  const soundBtn       = document.getElementById('soundBtn');
+
+  // ---------- audio (synthesized, no external files) ----------
+  let audioCtx = null;
+  let masterGain = null;
+  let muted = false;
+  let ambient = null;
+
+  function ensureAudio(){
+    if(!audioCtx){
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      masterGain = audioCtx.createGain();
+      masterGain.gain.value = muted ? 0 : 0.5;
+      masterGain.connect(audioCtx.destination);
+    }
+    if(audioCtx.state === 'suspended') audioCtx.resume();
+  }
+
+  function tone({freq=440, freqEnd=null, dur=0.15, type='sine', gain=0.28, delay=0}){
+    if(!audioCtx) return;
+    const t0 = audioCtx.currentTime + delay;
+    const osc = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, t0);
+    if(freqEnd !== null) osc.frequency.exponentialRampToValueAtTime(Math.max(freqEnd,1), t0+dur);
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.exponentialRampToValueAtTime(gain, t0+0.015);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0+dur);
+    osc.connect(g); g.connect(masterGain);
+    osc.start(t0); osc.stop(t0+dur+0.03);
+  }
+
+  function noiseBurst({dur=0.3, gain=0.3, filterFreq=900, delay=0}){
+    if(!audioCtx) return;
+    const t0 = audioCtx.currentTime + delay;
+    const size = Math.floor(audioCtx.sampleRate * dur);
+    const buffer = audioCtx.createBuffer(1, size, audioCtx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for(let i=0;i<size;i++) data[i] = (Math.random()*2-1) * (1 - i/size);
+    const src = audioCtx.createBufferSource();
+    src.buffer = buffer;
+    const filter = audioCtx.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.value = filterFreq;
+    const g = audioCtx.createGain();
+    g.gain.setValueAtTime(gain, t0);
+    src.connect(filter); filter.connect(g); g.connect(masterGain);
+    src.start(t0);
+  }
+
+  function playFlap(){ tone({freq:480, freqEnd:820, dur:0.1, type:'sine', gain:0.22}); }
+
+  function playScore(){
+    tone({freq:660, dur:0.09, type:'triangle', gain:0.26});
+    tone({freq:880, dur:0.15, type:'triangle', gain:0.2, delay:0.06});
+  }
+
+  function playHit(){
+    noiseBurst({dur:0.25, gain:0.35, filterFreq:1200});
+    tone({freq:150, freqEnd:35, dur:0.35, type:'sawtooth', gain:0.3, delay:0.02});
+  }
+
+  function playGameOver(){
+    tone({freq:520, freqEnd:120, dur:0.5, type:'square', gain:0.18, delay:0.15});
+  }
+
+  function startAmbient(){
+    if(!audioCtx) return;
+    stopAmbient();
+    const o1 = audioCtx.createOscillator();
+    const o2 = audioCtx.createOscillator();
+    o1.type = 'sine'; o2.type = 'sine';
+    o1.frequency.value = 110; o2.frequency.value = 164.8;
+    const filter = audioCtx.createBiquadFilter();
+    filter.type = 'lowpass'; filter.frequency.value = 700;
+    const g = audioCtx.createGain();
+    g.gain.setValueAtTime(0.0001, audioCtx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.05, audioCtx.currentTime+1.2);
+    o1.connect(filter); o2.connect(filter); filter.connect(g); g.connect(masterGain);
+    o1.start(); o2.start();
+    ambient = {o1,o2,g};
+  }
+
+  function stopAmbient(){
+    if(!ambient) return;
+    try{
+      const t = audioCtx.currentTime;
+      ambient.g.gain.exponentialRampToValueAtTime(0.0001, t+0.4);
+      ambient.o1.stop(t+0.45); ambient.o2.stop(t+0.45);
+    }catch(e){}
+    ambient = null;
+  }
+
+  soundBtn.addEventListener('click', (e)=>{
+    e.stopPropagation();
+    ensureAudio();
+    muted = !muted;
+    soundBtn.textContent = muted ? '🔇' : '🔊';
+    if(masterGain) masterGain.gain.setTargetAtTime(muted ? 0 : 0.5, audioCtx.currentTime, 0.05);
+  });
+
+  // ---------- state ----------
+  const STATE = { READY:0, PLAY:1, OVER:2 };
+  let state = STATE.READY;
+  let score = 0;
+  let best = 0;
+  let frame = 0;
+  let shake = 0;
+
+  const GRAVITY = 0.42;
+  const FLAP_V  = -7.4;
+  const MAX_FALL = 10;
+
+  const octo = {
+    x: W*0.3,
+    y: H*0.45,
+    vy: 0,
+    r: 17,
+    rot: 0,
+    flapPulse: 0 // spikes to 1 on flap, decays -> drives tentacle curl
+  };
+
+  const GAP = 168;
+  const PIPE_W = 66;
+  const PIPE_SPEED = 2.6;
+  const SPAWN_EVERY = 108;
+  let pipes = []; // {x, gapY, passed}
+
+  // ---------- starfield ----------
+  const stars = [];
+  for(let i=0;i<90;i++){
+    stars.push({
+      x:Math.random()*W,
+      y:Math.random()*H,
+      r:Math.random()*1.6+0.3,
+      tw:Math.random()*Math.PI*2,
+      speed:Math.random()*0.4+0.05
+    });
+  }
+  const nebulaBlobs = [
+    {x:60,  y:120, r:90, c:'rgba(255,110,199,0.10)'},
+    {x:330, y:260, r:110,c:'rgba(75,227,255,0.09)'},
+    {x:180, y:520, r:130,c:'rgba(140,90,255,0.10)'}
+  ];
+  const planets = [
+    {x:350,y:90, r:22, c1:'#ffcf8a', c2:'#c9772f', ring:true},
+    {x:40, y:430,r:14, c1:'#9be8ff', c2:'#2e7fa8', ring:false}
+  ];
+
+  // ---------- helpers ----------
+  function rand(a,b){ return a+Math.random()*(b-a); }
+
+  function resetGame(){
+    octo.y = H*0.45; octo.vy = 0; octo.rot = 0; octo.flapPulse = 0;
+    pipes = [];
+    score = 0; frame = 0; shake = 0;
+    scorePill.textContent = '0';
+    spawnPipe(true);
+  }
+
+  function spawnPipe(first){
+    const margin = 70;
+    const gapY = rand(margin+GAP/2, H-margin-GAP/2-90); // keep above bottom UI safe zone
+    pipes.push({ x: first ? W+40 : W+10, gapY, passed:false });
+  }
+
+  function flap(){
+    ensureAudio();
+    if(state === STATE.READY){
+      startGame();
+      return;
+    }
+    if(state === STATE.OVER) return;
+    octo.vy = FLAP_V;
+    octo.flapPulse = 1;
+    playFlap();
+  }
+
+  function startGame(){
+    ensureAudio();
+    resetGame();
+    state = STATE.PLAY;
+    startOverlay.classList.add('hidden');
+    overOverlay.classList.add('hidden');
+    startAmbient();
+  }
+
+  function gameOver(){
+    if(state === STATE.OVER) return;
+    state = STATE.OVER;
+    shake = 10;
+    best = Math.max(best, score);
+    bestPill.textContent = '🏆 ' + best;
+    finalScoreEl.textContent = score;
+    finalBestEl.textContent = best;
+    stopAmbient();
+    playHit();
+    playGameOver();
+    setTimeout(()=> overOverlay.classList.remove('hidden'), 400);
+  }
+
+  // ---------- input ----------
+  window.addEventListener('keydown', (e)=>{
+    if(e.code === 'Space' || e.code === 'ArrowUp'){
+      e.preventDefault();
+      flap();
+    }
+  });
+  canvas.addEventListener('pointerdown', (e)=>{ e.preventDefault(); flap(); });
+  startBtn.addEventListener('click', (e)=>{ e.stopPropagation(); ensureAudio(); startGame(); });
+  retryBtn.addEventListener('click', (e)=>{ e.stopPropagation(); ensureAudio(); startGame(); });
+
+  // ---------- drawing ----------
+  function drawBackground(){
+    // base gradient
+    const g = ctx.createLinearGradient(0,0,0,H);
+    g.addColorStop(0,'#120a2e');
+    g.addColorStop(0.55,'#1c1044');
+    g.addColorStop(1,'#05040f');
+    ctx.fillStyle = g;
+    ctx.fillRect(0,0,W,H);
+
+    // nebula blobs
+    nebulaBlobs.forEach(n=>{
+      const rg = ctx.createRadialGradient(n.x,n.y,0,n.x,n.y,n.r);
+      rg.addColorStop(0, n.c);
+      rg.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = rg;
+      ctx.beginPath();
+      ctx.arc(n.x,n.y,n.r,0,Math.PI*2);
+      ctx.fill();
+    });
+
+    // planets (slow parallax)
+    planets.forEach(p=>{
+      const px = ((p.x - frame*0.15) % (W+60) + (W+60)) % (W+60) - 30;
+      const pg = ctx.createRadialGradient(px-p.r*0.3,p.y-p.r*0.3,1,px,p.y,p.r);
+      pg.addColorStop(0,p.c1);
+      pg.addColorStop(1,p.c2);
+      if(p.ring){
+        ctx.save();
+        ctx.translate(px,p.y);
+        ctx.rotate(-0.35);
+        ctx.strokeStyle = 'rgba(255,230,180,0.55)';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.ellipse(0,0,p.r*1.7,p.r*0.55,0,0,Math.PI*2);
+        ctx.stroke();
+        ctx.restore();
+      }
+      ctx.fillStyle = pg;
+      ctx.beginPath();
+      ctx.arc(px,p.y,p.r,0,Math.PI*2);
+      ctx.fill();
+    });
+
+    // stars
+    stars.forEach(s=>{
+      s.tw += 0.05;
+      const alpha = 0.5 + Math.sin(s.tw)*0.5;
+      if(state===STATE.PLAY){
+        s.x -= s.speed;
+        if(s.x < 0){ s.x = W; s.y = Math.random()*H; }
+      }
+      ctx.globalAlpha = alpha;
+      ctx.fillStyle = '#fff';
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, s.r, 0, Math.PI*2);
+      ctx.fill();
+    });
+    ctx.globalAlpha = 1;
+  }
+
+  function drawPipe(p){
+    const gapTop = p.gapY - GAP/2;
+    const gapBot = p.gapY + GAP/2;
+
+    [ {y0:0, y1:gapTop, dir:1}, {y0:gapBot, y1:H, dir:-1} ].forEach(seg=>{
+      const h = seg.y1 - seg.y0;
+      if(h<=0) return;
+      const grad = ctx.createLinearGradient(p.x,0,p.x+PIPE_W,0);
+      grad.addColorStop(0,'#1a0f3d');
+      grad.addColorStop(0.15,'#3d2578');
+      grad.addColorStop(0.5,'#7b4fd6');
+      grad.addColorStop(0.85,'#3d2578');
+      grad.addColorStop(1,'#1a0f3d');
+
+      ctx.save();
+      ctx.shadowColor = 'rgba(140,90,255,0.65)';
+      ctx.shadowBlur = 14;
+      ctx.fillStyle = grad;
+      ctx.fillRect(p.x, seg.y0, PIPE_W, h);
+      ctx.restore();
+
+      // glowing edge line
+      ctx.strokeStyle = 'rgba(75,227,255,0.7)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(p.x, seg.y0); ctx.lineTo(p.x, seg.y1);
+      ctx.moveTo(p.x+PIPE_W, seg.y0); ctx.lineTo(p.x+PIPE_W, seg.y1);
+      ctx.stroke();
+
+      // crystal cap facing the gap
+      const capY = seg.dir === 1 ? seg.y1 : seg.y0;
+      const capDir = seg.dir;
+      ctx.save();
+      ctx.beginPath();
+      ctx.moveTo(p.x-4, capY);
+      ctx.lineTo(p.x+PIPE_W/2, capY + capDir*22);
+      ctx.lineTo(p.x+PIPE_W+4, capY);
+      ctx.closePath();
+      const capGrad = ctx.createLinearGradient(p.x,capY,p.x+PIPE_W,capY);
+      capGrad.addColorStop(0,'#4be3ff');
+      capGrad.addColorStop(0.5,'#ff6ec7');
+      capGrad.addColorStop(1,'#4be3ff');
+      ctx.fillStyle = capGrad;
+      ctx.shadowColor = 'rgba(255,110,199,0.8)';
+      ctx.shadowBlur = 12;
+      ctx.fill();
+      ctx.restore();
+    });
+  }
+
+  function drawOcto(){
+    const { x, y, vy } = octo;
+    octo.rot = Math.max(-0.5, Math.min(1.1, vy/10));
+    const pulse = octo.flapPulse;
+
+    ctx.save();
+    ctx.translate(x,y);
+    ctx.rotate(octo.rot);
+
+    // glow aura
+    const glow = ctx.createRadialGradient(0,0,4,0,0,34);
+    glow.addColorStop(0,'rgba(255,150,220,0.55)');
+    glow.addColorStop(1,'rgba(255,150,220,0)');
+    ctx.fillStyle = glow;
+    ctx.beginPath(); ctx.arc(0,0,34,0,Math.PI*2); ctx.fill();
+
+    // tentacles (behind head)
+    const nT = 6;
+    for(let i=0;i<nT;i++){
+      const spread = (i/(nT-1) - 0.5) * 1.9;
+      const baseX = spread*11;
+      const t = frame*0.15 + i*1.1;
+      const wave = Math.sin(t) * (4 + pulse*10);
+      const curl = pulse * 14;
+
+      ctx.beginPath();
+      ctx.moveTo(baseX, 10);
+      ctx.quadraticCurveTo(
+        baseX + wave*1.3, 26 + curl*0.4,
+        baseX + wave*0.5 + spread*6, 40 + curl
+      );
+      ctx.lineWidth = 5.5 - Math.abs(spread)*1.5;
+      ctx.lineCap = 'round';
+      ctx.strokeStyle = '#c470e8';
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.arc(baseX + wave*0.5 + spread*6, 40+curl, 2.2, 0, Math.PI*2);
+      ctx.fillStyle = '#ffb3ec';
+      ctx.fill();
+    }
+
+    // head
+    const headGrad = ctx.createRadialGradient(-6,-8,2,0,0,20);
+    headGrad.addColorStop(0,'#e6b8ff');
+    headGrad.addColorStop(0.55,'#b06bf0');
+    headGrad.addColorStop(1,'#7a35c9');
+    ctx.beginPath();
+    ctx.ellipse(0,0,19,16,0,0,Math.PI*2);
+    ctx.fillStyle = headGrad;
+    ctx.fill();
+
+    // little horn/antenna bumps for space-cute vibe
+    ctx.beginPath();
+    ctx.arc(-9,-13,3,0,Math.PI*2);
+    ctx.arc(9,-13,3,0,Math.PI*2);
+    ctx.fillStyle = '#b06bf0';
+    ctx.fill();
+
+    // eyes
+    [-7, 7].forEach(ex=>{
+      ctx.beginPath();
+      ctx.arc(ex,-2,5.2,0,Math.PI*2);
+      ctx.fillStyle = '#fff';
+      ctx.fill();
+      const pupilShift = Math.max(-2, Math.min(2, vy*0.3));
+      ctx.beginPath();
+      ctx.arc(ex+1.3, -2+pupilShift*0.4, 2.6,0,Math.PI*2);
+      ctx.fillStyle = '#241033';
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(ex+2, -3.2, 0.9,0,Math.PI*2);
+      ctx.fillStyle = '#fff';
+      ctx.fill();
+    });
+
+    // blush
+    ctx.globalAlpha = 0.5;
+    ctx.fillStyle = '#ff9fd6';
+    ctx.beginPath(); ctx.ellipse(-13,3,3,1.8,0,0,Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(13,3,3,1.8,0,0,Math.PI*2); ctx.fill();
+    ctx.globalAlpha = 1;
+
+    ctx.restore();
+
+    if(pulse>0) octo.flapPulse = Math.max(0, pulse - 0.06);
+  }
+
+  function circleRectHit(cx,cy,cr, rx,ry,rw,rh){
+    const nx = Math.max(rx, Math.min(cx, rx+rw));
+    const ny = Math.max(ry, Math.min(cy, ry+rh));
+    const dx = cx-nx, dy = cy-ny;
+    return (dx*dx+dy*dy) < cr*cr;
+  }
+
+  function update(){
+    frame++;
+
+    if(state === STATE.PLAY){
+      octo.vy = Math.min(MAX_FALL, octo.vy + GRAVITY);
+      octo.y += octo.vy;
+
+      if(octo.y - octo.r < 0){ octo.y = octo.r; octo.vy = 0; }
+      if(octo.y + octo.r > H){ octo.y = H-octo.r; gameOver(); }
+
+      if(frame % SPAWN_EVERY === 0) spawnPipe(false);
+
+      pipes.forEach(p=>{ p.x -= PIPE_SPEED; });
+      pipes = pipes.filter(p=> p.x + PIPE_W > -10);
+
+      pipes.forEach(p=>{
+        if(!p.passed && p.x + PIPE_W < octo.x - octo.r){
+          p.passed = true;
+          score++;
+          scorePill.textContent = score;
+          playScore();
+        }
+        const gapTop = p.gapY - GAP/2;
+        const gapBot = p.gapY + GAP/2;
+        if(circleRectHit(octo.x,octo.y,octo.r-3, p.x,0,PIPE_W,gapTop) ||
+           circleRectHit(octo.x,octo.y,octo.r-3, p.x,gapBot,PIPE_W,H-gapBot)){
+          gameOver();
+        }
+      });
+    } else if(state === STATE.READY){
+      octo.y = H*0.45 + Math.sin(frame*0.05)*10;
+    }
+
+    if(shake>0) shake *= 0.85;
+  }
+
+  function draw(){
+    ctx.save();
+    if(shake>0.3){
+      ctx.translate((Math.random()-0.5)*shake, (Math.random()-0.5)*shake);
+    }
+    drawBackground();
+    pipes.forEach(drawPipe);
+    drawOcto();
+    ctx.restore();
+  }
+
+  function loop(){
+    update();
+    draw();
+    requestAnimationFrame(loop);
+  }
+
+  bestPill.textContent = '🏆 0';
+  spawnPipe(true);
+  loop();
+})();
+</script>
+</body>
+</html>

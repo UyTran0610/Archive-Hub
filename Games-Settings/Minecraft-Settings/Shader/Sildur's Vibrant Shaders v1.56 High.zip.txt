@@ -1,0 +1,5 @@
+#Tue Apr 28 15:02:57 ICT 2026
+Godrays_Density=0.575
+Moonlight=0.006
+uFogDensity=100.0
+uwatertint=false

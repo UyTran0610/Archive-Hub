@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="vi" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Uy's Archive Hub</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        darkbg: '#0f172a',
+                        cardbg: '#1e293b',
+                        bordercolor: '#334155',
+                        accent: '#3b82f6',
+                        accentHover: '#2563eb'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Custom scrollbar */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #475569; }
+    </style>
+</head>
+<body class="bg-darkbg text-slate-200 font-sans min-h-screen flex flex-col">
+
+    <!-- Header Navigation -->
+    <header class="border-b border-bordercolor bg-cardbg/80 backdrop-blur sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center space-x-3">
+                    <i class="fa-solid font-bold fa-box-archive text-accent text-2xl"></i>
+                    <span class="font-bold text-lg tracking-wide text-white">UY'S ARCHIVE HUB</span>
+                </div>
+                <!-- Navigation Tabs -->
+                <nav class="flex space-x-2 sm:space-x-4">
+                    <button onclick="switchTab('downloads')" id="btn-downloads" class="tab-btn px-4 py-2 rounded-lg text-sm font-medium transition flex items-center gap-2 bg-accent text-white">
+                        <i class="fa-solid fa-download"></i> <span class="hidden sm:inline">Tải về</span>
+                    </button>
+                    <button onclick="switchTab('games')" id="btn-games" class="tab-btn px-4 py-2 rounded-lg text-sm font-medium transition flex items-center gap-2 text-slate-400 hover:text-white hover:bg-slate-800">
+                        <i class="fa-solid fa-gamepad"></i> <span class="hidden sm:inline">Chơi Game</span>
+                    </button>
+                    <button onclick="switchTab('markdown')" id="btn-markdown" class="tab-btn px-4 py-2 rounded-lg text-sm font-medium transition flex items-center gap-2 text-slate-400 hover:text-white hover:bg-slate-800">
+                        <i class="fa-solid fa-file-pen"></i> <span class="hidden sm:inline">Markdown Live</span>
+                    </button>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6">
+
+        <!-- TAB 1: DOWNLOADS (Games Settings + Misc) -->
+        <section id="tab-downloads" class="space-y-8">
+            <!-- Game Settings Section -->
+            <div>
+                <h2 class="text-xl font-semibold text-white mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-sliders text-accent"></i> Cấu hình Game (Games-Settings)
+                </h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <!-- Minecraft Settings -->
+                    <div class="bg-cardbg border border-bordercolor rounded-xl p-5 flex items-center justify-between hover:border-accent transition group">
+                        <div class="flex items-center gap-4">
+                            <div class="p-3 bg-slate-800 rounded-lg text-green-400 group-hover:scale-110 transition">
+                                <i class="fa-solid fa-cube text-xl"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-medium text-white">Minecraft Settings</h3>
+                                <p class="text-xs text-slate-400">Thư mục cấu hình Minecraft</p>
+                            </div>
+                        </div>
+                        <a href="Games-Settings/Minecraft-Settings.zip" download class="px-3 py-2 bg-slate-800 hover:bg-accent text-slate-200 hover:text-white rounded-lg text-sm transition flex items-center gap-2" title="Tải file .zip">
+                            <i class="fa-solid fa-download"></i> Tải
+                        </a>
+                    </div>
+
+                    <!-- NTE Settings -->
+                    <div class="bg-cardbg border border-bordercolor rounded-xl p-5 flex items-center justify-between hover:border-accent transition group">
+                        <div class="flex items-center gap-4">
+                            <div class="p-3 bg-slate-800 rounded-lg text-purple-400 group-hover:scale-110 transition">
+                                <i class="fa-solid fa-gear text-xl"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-medium text-white">NTE Settings</h3>
+                                <p class="text-xs text-slate-400">Thư mục cấu hình NTE</p>
+                            </div>
+                        </div>
+                        <a href="Games-Settings/NTE-settings.zip" download class="px-3 py-2 bg-slate-800 hover:bg-accent text-slate-200 hover:text-white rounded-lg text-sm transition flex items-center gap-2" title="Tải file .zip">
+                            <i class="fa-solid fa-download"></i> Tải
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Misc Section -->
+            <div>
+                <h2 class="text-xl font-semibold text-white mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-folder-open text-accent"></i> Tệp tin khác (Misc)
+                </h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <!-- PC-cleaner -->
+                    <div class="bg-cardbg border border-bordercolor rounded-xl p-4 flex flex-col justify-between hover:border-accent transition">
+                        <div class="flex items-center gap-3 mb-3">
+                            <i class="fa-solid fa-broom text-yellow-400 text-lg"></i>
+                            <span class="font-medium text-white truncate">PC-cleaner</span>
+                        </div>
+                        <a href="Misc/PC-cleaner.zip" download class="w-full text-center py-2 bg-slate-800 hover:bg-accent rounded-lg text-xs font-medium transition">
+                            <i class="fa-solid fa-download mr-1"></i> Tải xuống (.zip)
+                        </a>
+                    </div>
+
+                    <!-- batch video downscaler.py -->
+                    <div class="bg-cardbg border border-bordercolor rounded-xl p-4 flex flex-col justify-between hover:border-accent transition">
+                        <div class="flex items-center gap-3 mb-3">
+                            <i class="fa-brands fa-python text-blue-400 text-lg"></i>
+                            <span class="font-medium text-white truncate" title="batch video downscaler.py">batch video downscaler.py</span>
+                        </div>
+                        <a href="Misc/batch video downscaler.py" download class="w-full text-center py-2 bg-slate-800 hover:bg-accent rounded-lg text-xs font-medium transition">
+                            <i class="fa-solid fa-download mr-1"></i> Tải .PY (14 KB)
+                        </a>
+                    </div>
+
+                    <!-- PC-Note.txt -->
+                    <div class="bg-cardbg border border-bordercolor rounded-xl p-4 flex flex-col justify-between hover:border-accent transition">
+                        <div class="flex items-center gap-3 mb-3">
+                            <i class="fa-solid fa-file-lines text-slate-400 text-lg"></i>
+                            <span class="font-medium text-white truncate">PC-Note.txt</span>
+                        </div>
+                        <a href="Misc/PC-Note.txt" download class="w-full text-center py-2 bg-slate-800 hover:bg-accent rounded-lg text-xs font-medium transition">
+                            <i class="fa-solid fa-download mr-1"></i> Tải .TXT (1 KB)
+                        </a>
+                    </div>
+
+                    <!-- throttel stop setting.png -->
+                    <div class="bg-cardbg border border-bordercolor rounded-xl p-4 flex flex-col justify-between hover:border-accent transition">
+                        <div class="flex items-center gap-3 mb-3">
+                            <i class="fa-solid fa-image text-pink-400 text-lg"></i>
+                            <span class="font-medium text-white truncate" title="throttel stop setting.png">throttel stop setting.png</span>
+                        </div>
+                        <a href="Misc/throttel stop setting.png" download class="w-full text-center py-2 bg-slate-800 hover:bg-accent rounded-lg text-xs font-medium transition">
+                            <i class="fa-solid fa-download mr-1"></i> Tải .PNG (82 KB)
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 2: HTML GAMES -->
+        <section id="tab-games" class="hidden space-y-4">
+            <div class="flex flex-wrap items-center justify-between gap-4 bg-cardbg p-4 rounded-xl border border-bordercolor">
+                <span class="text-sm text-slate-300 font-medium"><i class="fa-solid fa-gamepad text-accent mr-2"></i>Chọn game để chơi:</span>
+                <div class="flex flex-wrap gap-2">
+                    <button onclick="playGame('Html-Games/2048.html')" class="px-3 py-1.5 bg-slate-800 hover:bg-accent text-xs font-medium rounded-lg transition border border-bordercolor">
+                        🎮 2048
+                    </button>
+                    <button onclick="playGame('Html-Games/neon-runner.html')" class="px-3 py-1.5 bg-slate-800 hover:bg-accent text-xs font-medium rounded-lg transition border border-bordercolor">
+                        🏎️ Neon Runner
+                    </button>
+                    <button onclick="playGame('Html-Games/octopus-flappy.html')" class="px-3 py-1.5 bg-slate-800 hover:bg-accent text-xs font-medium rounded-lg transition border border-bordercolor">
+                        🐙 Octopus Flappy
+                    </button>
+                </div>
+            </div>
+
+            <!-- Game Viewer Container -->
+            <div class="w-full bg-black border border-bordercolor rounded-xl overflow-hidden h-[75vh] relative">
+                <iframe id="game-frame" src="Html-Games/2048.html" class="w-full h-full border-none"></iframe>
+            </div>
+        </section>
+
+        <!-- TAB 3: MARKDOWN LIVE -->
+        <section id="tab-markdown" class="hidden h-[86vh]">
+            <div class="w-full h-full bg-cardbg border border-bordercolor rounded-xl overflow-hidden">
+                <!-- Chạy ứng dụng MarkdownLive trực tiếp từ thư mục MarkdownLive -->
+                <iframe src="MarkdownLive/MarkdownLive.html" class="w-full h-full border-none"></iframe>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <!-- <footer class="border-t border-bordercolor bg-cardbg py-4 text-center text-xs text-slate-500">
+        Hosting trên GitHub Pages • Được tối ưu bởi Dark UI
+    </footer> -->
+
+    <!-- JavaScript logic cho Tabs và Chơi game -->
+    <script>
+        function switchTab(tabId) {
+            // Hide all tabs
+            document.getElementById('tab-downloads').classList.add('hidden');
+            document.getElementById('tab-games').classList.add('hidden');
+            document.getElementById('tab-markdown').classList.add('hidden');
+
+            // Reset button styles
+            const btns = document.querySelectorAll('.tab-btn');
+            btns.forEach(btn => {
+                btn.classList.remove('bg-accent', 'text-white');
+                btn.classList.add('text-slate-400', 'hover:text-white', 'hover:bg-slate-800');
+            });
+
+            // Show active tab
+            document.getElementById(`tab-${tabId}`).classList.remove('hidden');
+
+            // Active button style
+            const activeBtn = document.getElementById(`btn-${tabId}`);
+            activeBtn.classList.remove('text-slate-400', 'hover:text-white', 'hover:bg-slate-800');
+            activeBtn.classList.add('bg-accent', 'text-white');
+        }
+
+        function playGame(gamePath) {
+            document.getElementById('game-frame').src = gamePath;
+        }
+    </script>
+</body>
+</html>

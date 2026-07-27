@@ -1,0 +1,10 @@
+cpu core -180 Mv (210)
+cpu cache -85 Mv
+
+Games 3.6 GHZ
+
+596.49
+
+D:\Wuthering Waves\Wuthering Waves Game\Client\Saved\Config\WindowsNoEditor
+r.SecondaryScreenPercentage.GameViewport=83
+
