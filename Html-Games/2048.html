@@ -29,7 +29,8 @@
   *{box-sizing:border-box;}
   html,body{margin:0;padding:0;}
   body{
-    min-height:100vh;
+    height:100vh;
+    height:100dvh;
     background:
       radial-gradient(circle at 15% 10%, var(--bg-2) 0%, transparent 45%),
       radial-gradient(circle at 85% 90%, var(--blue) 0%, transparent 40%),
@@ -37,8 +38,10 @@
     font-family:'Quicksand', sans-serif;
     color:var(--cocoa);
     display:flex;
+    align-items:center;
     justify-content:center;
     overflow-x:hidden;
+    overflow-y:auto;
     -webkit-tap-highlight-color:transparent;
   }
 
@@ -413,8 +416,42 @@
   var bestEl = document.getElementById('best');
   var scoreBoxEl = document.getElementById('scoreBox');
   var muteBtn = document.getElementById('muteBtn');
+  var appEl = document.querySelector('.app');
+  var boardWrapEl = document.querySelector('.board-wrap');
 
   var cellSize = 0, gapPx = 0, step = 0;
+
+  /* ---------- fit whole app to the available viewport (width AND height) ---------- */
+  /* The board is a 1:1 square tied to the app's width, so if we only ever cap by
+     width (like a fixed 440px), the app can end up taller than the viewport/iframe
+     and get cut off at the bottom with a scrollbar. This measures how much height
+     everything BUT the board takes up, then picks the largest app width that still
+     lets the whole thing fit inside the available height (and width). */
+  function fitApp(){
+    var totalHeight = appEl.scrollHeight;
+    var boardHeight = boardWrapEl.getBoundingClientRect().height;
+    var chromeHeight = totalHeight - boardHeight;
+
+    var cs = getComputedStyle(appEl);
+    var padX = parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight);
+
+    var margin = 16;
+    var availW = Math.max(window.innerWidth - margin * 2, 240);
+    var availH = Math.max(window.innerHeight - margin * 2, 240);
+
+    // boardWidth = appWidth - padX, and boardHeight === boardWidth (aspect-ratio 1/1), so:
+    // chromeHeight + (appWidth - padX) <= availH  =>  appWidth <= availH - chromeHeight + padX
+    var widthForHeight = availH - chromeHeight + padX;
+
+    var target = Math.min(availW, widthForHeight, 480);
+    target = Math.max(target, 260);
+
+    appEl.style.width = target + 'px';
+    appEl.style.maxWidth = target + 'px';
+
+    measureGrid();
+    repositionNoAnim();
+  }
 
   /* ---------- setup background grid cells ---------- */
   for (var i = 0; i < SIZE * SIZE; i++) {
@@ -785,12 +822,15 @@
   window.addEventListener('resize', function(){
     clearTimeout(resizeTimer);
     resizeTimer = setTimeout(function(){
-      measureGrid();
-      repositionNoAnim();
+      fitApp();
     }, 120);
   });
 
+  fitApp();
   initGame();
+  if (document.fonts && document.fonts.ready){
+    document.fonts.ready.then(function(){ fitApp(); });
+  }
 })();
 </script>
 </body>
