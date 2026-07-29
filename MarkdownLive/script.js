@@ -231,9 +231,12 @@ function handleScroll(source, target) {
     target.scrollTop = scrollPercentage * (target.scrollHeight - target.clientHeight);
 }
 
-// Xác định bảng điều khiển nào đang nhận tương tác từ chuột để tránh vòng lặp cuộn vô hạn
+// Bắt sự kiện di chuột (PC) và chạm tay (Điện thoại)
 markdownInput.addEventListener('mouseenter', () => activeScrollSource = markdownInput);
 previewOutput.addEventListener('mouseenter', () => activeScrollSource = previewOutput);
+
+markdownInput.addEventListener('touchstart', () => activeScrollSource = markdownInput, { passive: true });
+previewOutput.addEventListener('touchstart', () => activeScrollSource = previewOutput, { passive: true });
 
 markdownInput.addEventListener('scroll', () => handleScroll(markdownInput, previewOutput));
 previewOutput.addEventListener('scroll', () => handleScroll(previewOutput, markdownInput));
