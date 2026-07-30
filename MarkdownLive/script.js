@@ -33,10 +33,10 @@ Chào mừng bạn đến với **Markdown Live**! Đây là một ứng dụng 
 ---
 
 ### 2. Công thức toán học (LaTeX/Math)
-- Viết cùng dòng (inline): $E = mc^2$ hoặc đường chéo tam giác $c = \sqrt{a^2 + b^2}$.
+- Viết cùng dòng (inline): $E = mc^2$ hoặc đường chéo tam giác $c = \\sqrt{a^2 + b^2}$.
 - Viết khối hiển thị trung tâm (block display):
 $$
-f(x) = \int_{-\infty}^{\infty} e^{-x^2} dx
+f(x) = \\int_{-\\infty}^{\\infty} e^{-x^2} dx
 $$
 
 ---
