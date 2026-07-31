@@ -220,8 +220,28 @@ function loadDefaultContent() {
     previewOutput.scrollTop = 0;
 }
 
+// Hàm hoãn xử lý (Debounce) giúp tránh giật lag khi gõ văn bản
+function debounce(func, delay = 300) {
+    let timeoutId;
+    return function (...args) {
+        clearTimeout(timeoutId);
+        timeoutId = setTimeout(() => {
+            func.apply(this, args);
+        }, delay);
+    };
+}
+
+// Tạo hàm render có độ trễ 300ms
+const debouncedRender = debounce(renderMarkdown, 300);
+
 // Sự kiện nhập liệu trong Editor
-markdownInput.addEventListener('input', renderMarkdown);
+markdownInput.addEventListener('input', () => {
+    // Cập nhật số ký tự ngay lập tức để cảm giác gõ vẫn mượt
+    charCounter.textContent = `${markdownInput.value.length} ký tự`;
+    
+    // Đợi ngừng gõ 300ms mới xử lý render Markdown / KaTeX / Mermaid
+    debouncedRender();
+});
 
 // Đồng bộ cuộn trang (Sync Scroll) dựa trên phần trăm vị trí cuộn
 function handleScroll(source, target) {

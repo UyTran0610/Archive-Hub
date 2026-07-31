@@ -249,3 +249,12 @@ body {
 .markdown-alert-caution .markdown-alert-title {
     color: #d1242f !important;
 }
+
+/* Canh giữa biểu đồ Mermaid */
+.mermaid {
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    background: transparent !important;
+    border: none !important;
+}
