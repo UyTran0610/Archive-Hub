@@ -118,21 +118,109 @@ body {
     justify-content: space-between;
 }
 
-/* Editor Styling */
-#markdown-input {
+/* Editor Styling (textarea trong suốt đè lên lớp nền đã tô màu cú pháp) */
+.editor-container {
+    position: relative;
     flex: 1;
+    overflow: hidden;
+    background-color: #fafafa;
+}
+
+#markdown-input,
+#editor-highlight {
+    position: absolute;
+    inset: 0;
+    margin: 0;
     width: 100%;
-    border: none;
-    resize: none;
+    height: 100%;
     padding: 20px;
+    border: none;
     font-family: 'Courier New', Courier, monospace;
     font-size: 1rem;
     line-height: 1.6;
-    outline: none;
-    color: #24292f;
-    background-color: #fafafa;
-    overflow-y: auto;
+    tab-size: 4;
+    -moz-tab-size: 4;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
 }
+
+#markdown-input {
+    z-index: 2;
+    resize: none;
+    outline: none;
+    color: transparent;
+    caret-color: #24292f;
+    background-color: transparent;
+    overflow-y: auto;
+    scrollbar-gutter: stable;
+}
+
+#markdown-input::placeholder {
+    color: #9aa4af;
+}
+
+#markdown-input::selection {
+    background-color: rgba(79, 70, 229, 0.3);
+}
+
+#editor-highlight {
+    z-index: 1;
+    overflow: hidden;
+    scrollbar-gutter: stable;
+    pointer-events: none;
+    user-select: none;
+    color: #24292f;
+}
+
+#editor-highlight code {
+    display: block;
+    margin: 0;
+    padding: 0;
+    font: inherit;
+    white-space: inherit;
+    word-wrap: inherit;
+    overflow-wrap: inherit;
+    background: none;
+}
+
+/* ==========================================================================
+   Tô màu cú pháp Markdown trong Editor (Syntax Highlighting)
+   ========================================================================== */
+.md-header-marker { color: #8c959f; font-weight: 600; }
+.md-header { font-weight: 700; }
+.md-header-1, .md-header-2 { color: #0969da; }
+.md-header-3, .md-header-4 { color: #0550ae; }
+.md-header-5, .md-header-6 { color: #1f6feb; }
+
+.md-bold { color: #24292f; font-weight: 700; }
+.md-italic { color: #24292f; font-style: italic; }
+.md-bolditalic { color: #24292f; font-weight: 700; font-style: italic; }
+.md-strikethrough { color: #6e7781; text-decoration: line-through; }
+
+.md-code-inline {
+    color: #cf222e;
+    background-color: rgba(175, 184, 193, 0.2);
+    border-radius: 3px;
+}
+
+.md-fence-marker { color: #8c959f; font-weight: 600; }
+.md-fence-lang { color: #8250df; font-weight: 600; }
+.md-code-block { color: #57606a; }
+
+.md-quote-marker { color: #1a7f37; font-weight: 700; }
+.md-quote-text { color: #57606a; font-style: italic; }
+.md-alert-tag { font-weight: 700; font-style: normal; }
+
+.md-list-marker { color: #9a6700; font-weight: 700; }
+
+.md-link-marker { color: #8c959f; }
+.md-link-text { color: #0969da; }
+.md-link-url { color: #1a7f37; text-decoration: underline; }
+
+.md-hr { color: #8c959f; font-weight: 700; }
+.md-table-pipe { color: #8c959f; }
+.md-math { color: #8250df; }
 
 /* Preview Styling */
 #preview-output {

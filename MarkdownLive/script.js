@@ -81,6 +81,8 @@ Hãy chỉnh sửa thử nội dung ở khung bên trái và quan sát sự thay
 const markdownInput = document.getElementById('markdown-input');
 const previewOutput = document.getElementById('preview-output');
 const charCounter = document.getElementById('char-counter');
+const editorHighlight = document.getElementById('editor-highlight');
+const editorHighlightCode = document.getElementById('editor-highlight-code');
 
 const btnSync = document.getElementById('btn-sync');
 const btnReset = document.getElementById('btn-reset');
@@ -92,6 +94,166 @@ const toast = document.getElementById('toast');
 let isSyncScrollEnabled = true;
 let activeScrollSource = null;
 let mermaidTimeout = null;
+
+// ==========================================================================
+// TÔ MÀU CÚ PHÁP MARKDOWN TRONG EDITOR (Syntax Highlighting cho khung soạn thảo)
+// ==========================================================================
+
+// Bảng màu cho các loại GFM Alert, dùng chung tông màu với phần Preview
+const alertHighlightColors = {
+    NOTE: '#0969da',
+    TIP: '#1a7f37',
+    IMPORTANT: '#8250df',
+    WARNING: '#9a6700',
+    CAUTION: '#d1242f'
+};
+
+// Escape các ký tự HTML đặc biệt để tránh phá vỡ cấu trúc thẻ khi chèn span
+function escapeHtml(str) {
+    return str
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+}
+
+// Xử lý các cú pháp định dạng nằm trong một dòng (in đậm, in nghiêng, code, liên kết...)
+// Lưu ý: chuỗi đầu vào "text" đã được escapeHtml() từ trước
+function highlightInline(text) {
+    // Mỗi khi một quy tắc khớp và tạo ra span, ta "khóa" đoạn đó lại bằng một token
+    // tạm thời (ký tự \u0000 không thể gõ được) để các quy tắc chạy sau không quét
+    // nhầm vào bên trong span vừa tạo (ví dụ: tránh việc "**đậm**" bị quy tắc in
+    // nghiêng xử lý chồng thêm lần nữa vì nó chứa cặp dấu "*").
+    const store = [];
+    const protect = (html) => {
+        const token = `\u0000T${store.length}\u0000`;
+        store.push(html);
+        return token;
+    };
+
+    // 1. Code inline: `code`
+    text = text.replace(/(`+)([^`]+?)\1/g, (m, ticks, content) =>
+        protect(`<span class="md-code-inline">${ticks}${content}${ticks}</span>`));
+
+    // 2. Ảnh: ![alt](url)
+    text = text.replace(/(!)(\[)([^\]]*)(\])(\()([^)]*)(\))/g, (m, bang, ob, alt, cb, op, url, cp) =>
+        protect(`<span class="md-link-marker">${bang}${ob}</span><span class="md-link-text">${alt}</span><span class="md-link-marker">${cb}${op}</span><span class="md-link-url">${url}</span><span class="md-link-marker">${cp}</span>`));
+
+    // 3. Liên kết: [text](url)
+    text = text.replace(/(\[)([^\]]*)(\])(\()([^)]*)(\))/g, (m, ob, t, cb, op, url, cp) =>
+        protect(`<span class="md-link-marker">${ob}</span><span class="md-link-text">${t}</span><span class="md-link-marker">${cb}${op}</span><span class="md-link-url">${url}</span><span class="md-link-marker">${cp}</span>`));
+
+    // 4. In đậm + in nghiêng: ***text*** hoặc ___text___
+    text = text.replace(/(\*\*\*|___)([^*_\n]+?)\1/g, (m, d, c) =>
+        protect(`<span class="md-bolditalic">${d}${c}${d}</span>`));
+
+    // 5. In đậm: **text** hoặc __text__
+    text = text.replace(/(\*\*|__)([^*_\n]+?)\1/g, (m, d, c) =>
+        protect(`<span class="md-bold">${d}${c}${d}</span>`));
+
+    // 6. In nghiêng: *text* hoặc _text_
+    text = text.replace(/(\*|_)([^*_\n]+?)\1/g, (m, d, c) =>
+        protect(`<span class="md-italic">${d}${c}${d}</span>`));
+
+    // 7. Gạch ngang giữa chữ: ~~text~~
+    text = text.replace(/(~~)([^~\n]+?)\1/g, (m, d, c) =>
+        protect(`<span class="md-strikethrough">${d}${c}${d}</span>`));
+
+    // 8. Công thức toán dạng inline: $...$
+    text = text.replace(/(\$)([^$\n]+?)\1/g, (m, d, c) =>
+        protect(`<span class="md-math">${d}${c}${d}</span>`));
+
+    // Khôi phục toàn bộ token đã bảo vệ. Lặp lại vì một span vừa khôi phục
+    // (ví dụ liên kết) có thể chứa token khác lồng bên trong nó (ví dụ code inline).
+    let previous;
+    do {
+        previous = text;
+        text = text.replace(/\u0000T(\d+)\u0000/g, (m, idx) => store[Number(idx)]);
+    } while (text !== previous);
+
+    return text;
+}
+
+// Xử lý cú pháp ở cấp độ dòng (tiêu đề, trích dẫn, danh sách, gạch ngang, bảng biểu...)
+function highlightMarkdownLine(line) {
+    // Đường kẻ ngang (Horizontal Rule): ---, ***, ___
+    if (/^\s{0,3}([-*_])(?:\s*\1){2,}\s*$/.test(line)) {
+        return `<span class="md-hr">${escapeHtml(line)}</span>`;
+    }
+
+    // Tiêu đề dạng ATX: #, ##, ### ...
+    let m = line.match(/^(\s{0,3})(#{1,6})(\s+)(.*)$/);
+    if (m) {
+        const [, indent, hashes, space, content] = m;
+        const level = hashes.length;
+        return `${escapeHtml(indent)}<span class="md-header-marker">${hashes}</span>${escapeHtml(space)}<span class="md-header md-header-${level}">${highlightInline(escapeHtml(content))}</span>`;
+    }
+
+    // Trích dẫn / GFM Alerts (Blockquote): > ...
+    m = line.match(/^(\s{0,3}>+\s?)(.*)$/);
+    if (m) {
+        const [, marker, rest] = m;
+        const alertMatch = rest.match(/^\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\](.*)$/i);
+        if (alertMatch) {
+            const type = alertMatch[1].toUpperCase();
+            const color = alertHighlightColors[type] || '#0969da';
+            return `<span class="md-quote-marker">${escapeHtml(marker)}</span><span class="md-alert-tag" style="color:${color}">[!${type}]</span><span class="md-quote-text">${highlightInline(escapeHtml(alertMatch[2]))}</span>`;
+        }
+        return `<span class="md-quote-marker">${escapeHtml(marker)}</span><span class="md-quote-text">${highlightInline(escapeHtml(rest))}</span>`;
+    }
+
+    // Danh sách (List item): -, *, +, hoặc số thứ tự "1."
+    m = line.match(/^(\s*)([-*+]|\d+[.)])(\s+)(.*)$/);
+    if (m) {
+        const [, indent, marker, space, content] = m;
+        return `${escapeHtml(indent)}<span class="md-list-marker">${escapeHtml(marker)}</span>${escapeHtml(space)}${highlightInline(escapeHtml(content))}`;
+    }
+
+    // Dòng thuộc bảng biểu (chứa dấu |)
+    if (line.includes('|')) {
+        const escapedWithPipes = escapeHtml(line).replace(/\|/g, '<span class="md-table-pipe">|</span>');
+        return highlightInline(escapedWithPipes);
+    }
+
+    // Dòng văn bản thông thường (paragraph)
+    return highlightInline(escapeHtml(line));
+}
+
+// Hàm chính: quét toàn bộ nội dung Markdown, xử lý cả khối code (```...```) nhiều dòng
+function highlightMarkdown(text) {
+    const lines = text.split('\n');
+    let inFence = false;
+
+    const outputLines = lines.map((line) => {
+        const fenceMatch = line.match(/^(\s{0,3})(`{3,}|~{3,})(.*)$/);
+
+        if (fenceMatch) {
+            if (!inFence) {
+                inFence = true;
+                const [, indent, marker, lang] = fenceMatch;
+                return `${escapeHtml(indent)}<span class="md-fence-marker">${escapeHtml(marker)}</span><span class="md-fence-lang">${escapeHtml(lang)}</span>`;
+            } else {
+                inFence = false;
+                const [, indent, marker] = fenceMatch;
+                return `${escapeHtml(indent)}<span class="md-fence-marker">${escapeHtml(marker)}</span>`;
+            }
+        }
+
+        if (inFence) {
+            return `<span class="md-code-block">${escapeHtml(line)}</span>`;
+        }
+
+        return highlightMarkdownLine(line);
+    });
+
+    return outputLines.join('\n');
+}
+
+// Cập nhật lớp nền tô màu cú pháp phía sau khung soạn thảo
+function updateEditorHighlight() {
+    // Thêm một dòng trống ở cuối để đảm bảo chiều cao luôn khớp với textarea
+    // (đặc biệt khi nội dung kết thúc bằng dấu xuống dòng)
+    editorHighlightCode.innerHTML = highlightMarkdown(markdownInput.value) + '\n';
+}
 
 // Hàm hiển thị thông báo Toast
 function showToast(message) {
@@ -214,10 +376,12 @@ function renderMarkdown() {
 // Hàm gán lại dữ liệu mặc định
 function loadDefaultContent() {
     markdownInput.value = defaultMarkdown;
+    updateEditorHighlight();
     renderMarkdown();
     // Đưa thanh cuộn về đầu trang
     markdownInput.scrollTop = 0;
     previewOutput.scrollTop = 0;
+    editorHighlight.scrollTop = 0;
 }
 
 // Hàm hoãn xử lý (Debounce) giúp tránh giật lag khi gõ văn bản
@@ -238,7 +402,10 @@ const debouncedRender = debounce(renderMarkdown, 300);
 markdownInput.addEventListener('input', () => {
     // Cập nhật số ký tự ngay lập tức để cảm giác gõ vẫn mượt
     charCounter.textContent = `${markdownInput.value.length} ký tự`;
-    
+
+    // Tô màu cú pháp trong Editor ngay lập tức (nhẹ, không cần debounce)
+    updateEditorHighlight();
+
     // Đợi ngừng gõ 300ms mới xử lý render Markdown / KaTeX / Mermaid
     debouncedRender();
 });
@@ -258,7 +425,12 @@ previewOutput.addEventListener('mouseenter', () => activeScrollSource = previewO
 markdownInput.addEventListener('touchstart', () => activeScrollSource = markdownInput, { passive: true });
 previewOutput.addEventListener('touchstart', () => activeScrollSource = previewOutput, { passive: true });
 
-markdownInput.addEventListener('scroll', () => handleScroll(markdownInput, previewOutput));
+markdownInput.addEventListener('scroll', () => {
+    handleScroll(markdownInput, previewOutput);
+    // Đồng bộ lớp nền tô màu cú pháp cuộn theo đúng vị trí của textarea
+    editorHighlight.scrollTop = markdownInput.scrollTop;
+    editorHighlight.scrollLeft = markdownInput.scrollLeft;
+});
 previewOutput.addEventListener('scroll', () => handleScroll(previewOutput, markdownInput));
 
 // Nút Bật/Tắt Sync Scroll
@@ -300,94 +472,6 @@ btnPdf.addEventListener('click', () => {
         .then(() => showToast("Tải xuống PDF thành công!"))
         .catch(() => showToast("Xuất PDF thất bại."));
 });
-
-// Danh sách các URL CDN chính thức của thư viện bản mới nhất
-const librariesToUpdate = [
-    {
-        url: 'https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.5.1/github-markdown.min.css',
-        filename: 'github-markdown.min.css'
-    },
-    {
-        url: 'https://cdn.jsdelivr.net/npm/lucide@latest/dist/umd/lucide.min.js',
-        filename: 'lucide.min.js'
-    },
-    {
-        url: 'https://cdn.jsdelivr.net/npm/marked/marked.min.js',
-        filename: 'marked.min.js'
-    },
-    {
-        url: 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js',
-        filename: 'html2pdf.bundle.min.js'
-    },
-    {
-        url: 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css',
-        filename: 'github-highlight.min.css'
-    },
-    {
-        url: 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js',
-        filename: 'highlight.min.js'
-    },
-    {
-        url: 'https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.9.1/mermaid.min.js',
-        filename: 'mermaid.min.js'
-    },
-    {
-        url: 'https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css',
-        filename: 'katex.min.css'
-    },
-    {
-        url: 'https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js',
-        filename: 'katex.min.js'
-    },
-    {
-        url: 'https://cdn.jsdelivr.net/npm/marked-katex-extension@5.1.2/lib/index.umd.js',
-        filename: 'marked-katex-extension.min.js'
-    }
-];
-
-// Logic nút Cập nhật thư viện (Update Libs)
-// const btnUpdateLibs = document.getElementById('btn-update-libs');
-
-// btnUpdateLibs.addEventListener('click', async () => {
-//     // 1. Kiểm tra kết nối mạng của trình duyệt
-//     if (!navigator.onLine) {
-//         showToast("⚠️ Vui lòng kết nối Internet để tải bản cập nhật!");
-//         return;
-//     }
-
-//     const confirmUpdate = confirm(
-//         "Vì lý do bảo mật, trình duyệt không thể tự ghi đè tệp trực tiếp lên ổ cứng của bạn.\n\n" +
-//         "Hệ thống sẽ tải xuống 10 tệp thư viện phiên bản mới nhất về máy. " +
-//         "Sau khi tải xong, bạn chỉ cần di chuyển chúng vào thư mục 'libs/' để hoàn tất cập nhật. Bạn muốn tiếp tục?"
-//     );
-
-//     if (!confirmUpdate) return;
-
-//     showToast("🔄 Đang tải các thư viện bản mới nhất...");
-
-//     try {
-//         for (const lib of librariesToUpdate) {
-//             const response = await fetch(lib.url);
-//             if (!response.ok) throw new Error(`Không thể tải ${lib.filename}`);
-            
-//             const blob = await response.blob();
-//             const downloadUrl = URL.createObjectURL(blob);
-            
-//             // Tạo phần tử liên kết ẩn để kích hoạt tính năng tải tệp của trình duyệt
-//             const a = document.createElement('a');
-//             a.href = downloadUrl;
-//             a.download = lib.filename;
-//             document.body.appendChild(a);
-//             a.click();
-//             document.body.removeChild(a);
-//             URL.revokeObjectURL(downloadUrl);
-//         }
-//         showToast("✅ Đã tải xong! Hãy chuyển các file vừa tải vào thư mục 'libs/' để ghi đè.");
-//     } catch (error) {
-//         console.error("Lỗi cập nhật thư viện:", error);
-//         showToast("❌ Có lỗi xảy ra trong quá trình tải thư viện.");
-//     }
-// });
 
 // Chạy khởi tạo ứng dụng khi trang web tải xong
 window.addEventListener('DOMContentLoaded', () => {
