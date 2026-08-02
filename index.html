@@ -54,15 +54,130 @@
             border-radius: 0;
             background: #0b0f19;
         }
+
+        /* ============ Motion system ============ */
+        @keyframes fadeSlideDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fadeSlideUp {
+            from { opacity: 0; transform: translateY(16px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to   { opacity: 1; }
+        }
+        @keyframes popIn {
+            0%   { opacity: 0; transform: scale(0.92); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+        @keyframes ambientDrift {
+            0%, 100% { transform: translate(-50%, 0) scale(1); opacity: 0.9; }
+            50%      { transform: translate(-50%, 12px) scale(1.04); opacity: 1; }
+        }
+        @keyframes indicatorPulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(99,102,241,0.35); }
+            50%      { box-shadow: 0 0 0 4px rgba(99,102,241,0); }
+        }
+
+        .anim-header { animation: fadeSlideDown 0.6s cubic-bezier(0.16, 1, 0.3, 1) both; }
+        .anim-ambient { animation: ambientDrift 10s ease-in-out infinite; }
+
+        .reveal-up {
+            opacity: 0;
+            transform: translateY(16px);
+            transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1), transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .reveal-up.in-view {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Section panel cross-fade (tab content) */
+        .tab-panel {
+            animation: fadeSlideUp 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
+        }
+
+        /* Button micro-interaction */
+        .tab-btn, .game-btn, a[download], button {
+            transition: transform 0.15s ease, background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+        .tab-btn:active, .game-btn:active, a[download]:active {
+            transform: scale(0.96);
+        }
+
+        /* Sliding active pill behind desktop tabs */
+        #tab-indicator {
+            transition: left 0.35s cubic-bezier(0.16, 1, 0.3, 1), width 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        /* ============ Mobile bottom navigation ============ */
+        .mobile-nav-btn {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 3px;
+            flex: 1;
+            padding: 8px 4px 6px;
+            font-family: 'JetBrains Mono', monospace;
+        }
+        .mobile-nav-btn .mnb-icon {
+            width: 34px;
+            height: 34px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 10px;
+            transition: background-color 0.25s ease, color 0.25s ease, transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .mobile-nav-btn.active .mnb-icon {
+            background-color: rgba(99, 102, 241, 0.16);
+            color: #a5b4fc;
+            transform: translateY(-2px);
+            animation: indicatorPulse 2.2s ease-in-out infinite;
+        }
+        .mobile-nav-btn .mnb-label {
+            font-size: 10px;
+            letter-spacing: 0.02em;
+            color: #64748b;
+            transition: color 0.25s ease, transform 0.25s ease;
+        }
+        .mobile-nav-btn.active .mnb-label {
+            color: #a5b4fc;
+            transform: translateY(-2px);
+        }
+        .mobile-nav-btn .mnb-dot {
+            position: absolute;
+            top: 2px;
+            width: 4px;
+            height: 4px;
+            border-radius: 9999px;
+            background: #6366f1;
+            opacity: 0;
+            transition: opacity 0.25s ease;
+        }
+        .mobile-nav-btn.active .mnb-dot { opacity: 1; }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.001ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.001ms !important;
+                scroll-behavior: auto !important;
+            }
+        }
     </style>
 </head>
 <body class="bg-darkbg text-slate-300 font-sans min-h-screen flex flex-col bg-grid-pattern relative selection:bg-indigo-500/30 selection:text-indigo-200">
 
     <!-- Ambient Glowing Background Effect -->
-    <div class="fixed top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-[350px] bg-gradient-to-b from-indigo-500/10 via-cyan-500/5 to-transparent blur-3xl pointer-events-none -z-10"></div>
+    <div class="anim-ambient fixed top-0 left-1/2 w-full max-w-7xl h-[350px] bg-gradient-to-b from-indigo-500/10 via-cyan-500/5 to-transparent blur-3xl pointer-events-none -z-10"></div>
 
     <!-- Header Navigation -->
-    <header class="border-b border-cardborder bg-darkbg/80 backdrop-blur-md sticky top-0 z-50">
+    <header class="anim-header border-b border-cardborder bg-darkbg/80 backdrop-blur-md sticky top-0 z-50">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex items-center justify-between h-16">
                 
@@ -71,39 +186,67 @@
                     <div class="p-2 bg-indigo-500/10 border border-indigo-500/20 rounded-lg text-indigo-400">
                         <i class="fa-solid fa-terminal text-lg"></i>
                     </div>
-                    <div class="hidden sm:block">
+                    <div>
                         <div class="flex items-center gap-2">
-                            <span class="font-bold text-base tracking-tight text-white font-mono">UY'S ARCHIVE HUB</span>
+                            <span class="font-bold text-sm sm:text-base tracking-tight text-white font-mono">UY'S ARCHIVE HUB</span>
                         </div>
-                        <p class="text-[11px] text-slate-500 font-mono">// system.repository.online</p>
+                        <p class="hidden sm:block text-[11px] text-slate-500 font-mono">// system.repository.online</p>
                     </div>
                 </div>
 
-                <!-- Navigation Tabs -->
-                <nav class="flex items-center space-x-1 sm:space-x-2 bg-slate-900/80 p-1 rounded-xl border border-cardborder">
-                    <button onclick="switchTab('downloads')" id="btn-downloads" class="tab-btn px-3.5 py-1.5 rounded-lg text-xs font-mono font-medium transition-all duration-200 flex items-center gap-2 bg-indigo-600/20 text-indigo-300 border border-indigo-500/40 shadow-sm shadow-indigo-500/10">
-                        <i class="fa-solid fa-download text-indigo-400"></i>
+                <!-- Navigation Tabs (desktop / tablet) -->
+                <nav class="hidden sm:flex relative items-center space-x-1 bg-slate-900/80 p-1 rounded-xl border border-cardborder">
+                    <span id="tab-indicator" class="absolute top-1 bottom-1 rounded-lg bg-indigo-600/20 border border-indigo-500/40 shadow-sm shadow-indigo-500/10 -z-0"></span>
+                    <button onclick="switchTab('downloads')" id="btn-downloads" class="tab-btn relative z-10 px-3.5 py-1.5 rounded-lg text-xs font-mono font-medium flex items-center gap-2 text-indigo-300">
+                        <i class="fa-solid fa-download"></i>
                         <span>Tải về</span>
                     </button>
-                    <button onclick="switchTab('games')" id="btn-games" class="tab-btn px-3.5 py-1.5 rounded-lg text-xs font-mono font-medium transition-all duration-200 flex items-center gap-2 text-slate-400 hover:text-white hover:bg-slate-800/60 border border-transparent">
+                    <button onclick="switchTab('games')" id="btn-games" class="tab-btn relative z-10 px-3.5 py-1.5 rounded-lg text-xs font-mono font-medium flex items-center gap-2 text-slate-400 hover:text-white">
                         <i class="fa-solid fa-gamepad"></i>
                         <span>Chơi Game</span>
                     </button>
-                    <button onclick="switchTab('markdown')" id="btn-markdown" class="tab-btn px-3.5 py-1.5 rounded-lg text-xs font-mono font-medium transition-all duration-200 flex items-center gap-2 text-slate-400 hover:text-white hover:bg-slate-800/60 border border-transparent">
+                    <button onclick="switchTab('markdown')" id="btn-markdown" class="tab-btn relative z-10 px-3.5 py-1.5 rounded-lg text-xs font-mono font-medium flex items-center gap-2 text-slate-400 hover:text-white">
                         <i class="fa-solid fa-code"></i>
                         <span>Markdown Live</span>
                     </button>
                 </nav>
 
+                <!-- Status pill (mobile only, replaces the old cramped tab row) -->
+                <div class="flex sm:hidden items-center gap-1.5 text-[10px] font-mono text-slate-500 border border-cardborder rounded-lg px-2 py-1">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                    <span>ONLINE</span>
+                </div>
+
             </div>
         </div>
     </header>
 
+    <!-- Mobile Bottom Navigation -->
+    <nav class="sm:hidden fixed bottom-0 left-0 right-0 z-50 bg-darkbg/90 backdrop-blur-md border-t border-cardborder pb-[max(env(safe-area-inset-bottom),0px)]">
+        <div class="flex items-stretch">
+            <button onclick="switchTab('downloads')" id="mbtn-downloads" class="mobile-nav-btn active">
+                <span class="mnb-dot"></span>
+                <span class="mnb-icon"><i class="fa-solid fa-download text-sm"></i></span>
+                <span class="mnb-label">Tải về</span>
+            </button>
+            <button onclick="switchTab('games')" id="mbtn-games" class="mobile-nav-btn">
+                <span class="mnb-dot"></span>
+                <span class="mnb-icon"><i class="fa-solid fa-gamepad text-sm"></i></span>
+                <span class="mnb-label">Game</span>
+            </button>
+            <button onclick="switchTab('markdown')" id="mbtn-markdown" class="mobile-nav-btn">
+                <span class="mnb-dot"></span>
+                <span class="mnb-icon"><i class="fa-solid fa-code text-sm"></i></span>
+                <span class="mnb-label">Markdown</span>
+            </button>
+        </div>
+    </nav>
+
     <!-- Main Content -->
-    <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8">
+    <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 pb-24 sm:pb-8">
 
         <!-- TAB 1: DOWNLOADS (Games Settings + Misc) -->
-        <section id="tab-downloads" class="space-y-10">
+        <section id="tab-downloads" class="tab-panel space-y-10">
             
             <!-- Section 1: Game Settings -->
             <div>
@@ -116,7 +259,7 @@
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <!-- Minecraft Settings -->
-                    <div class="bg-cardbg border border-cardborder rounded-xl p-5 hover:border-indigo-500/40 transition-all duration-300 hover:shadow-lg hover:shadow-indigo-500/5 group flex flex-col justify-between">
+                    <div class="reveal-up bg-cardbg border border-cardborder rounded-xl p-5 hover:border-indigo-500/40 hover:-translate-y-0.5 transition-all duration-300 hover:shadow-lg hover:shadow-indigo-500/5 group flex flex-col justify-between">
                         <div>
                             <div class="flex items-start justify-between mb-3">
                                 <div class="p-2.5 bg-emerald-500/10 border border-emerald-500/20 rounded-lg text-emerald-400 group-hover:scale-105 transition-transform duration-200">
@@ -136,7 +279,7 @@
                     </div>
 
                     <!-- NTE Settings -->
-                    <div class="bg-cardbg border border-cardborder rounded-xl p-5 hover:border-indigo-500/40 transition-all duration-300 hover:shadow-lg hover:shadow-indigo-500/5 group flex flex-col justify-between">
+                    <div class="reveal-up bg-cardbg border border-cardborder rounded-xl p-5 hover:border-indigo-500/40 hover:-translate-y-0.5 transition-all duration-300 hover:shadow-lg hover:shadow-indigo-500/5 group flex flex-col justify-between">
                         <div>
                             <div class="flex items-start justify-between mb-3">
                                 <div class="p-2.5 bg-purple-500/10 border border-purple-500/20 rounded-lg text-purple-400 group-hover:scale-105 transition-transform duration-200">
@@ -169,7 +312,7 @@
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     
                     <!-- PC-cleaner -->
-                    <div class="bg-cardbg border border-cardborder rounded-xl p-4 flex flex-col justify-between hover:border-cyan-500/40 transition-all duration-300 group">
+                    <div class="reveal-up bg-cardbg border border-cardborder rounded-xl p-4 flex flex-col justify-between hover:border-cyan-500/40 hover:-translate-y-0.5 transition-all duration-300 group">
                         <div class="mb-4">
                             <div class="flex items-center justify-between mb-3">
                                 <div class="p-2 bg-amber-500/10 rounded-lg text-amber-400">
@@ -186,7 +329,7 @@
                     </div>
 
                     <!-- batch video downscaler.py -->
-                    <div class="bg-cardbg border border-cardborder rounded-xl p-4 flex flex-col justify-between hover:border-cyan-500/40 transition-all duration-300 group">
+                    <div class="reveal-up bg-cardbg border border-cardborder rounded-xl p-4 flex flex-col justify-between hover:border-cyan-500/40 hover:-translate-y-0.5 transition-all duration-300 group">
                         <div class="mb-4">
                             <div class="flex items-center justify-between mb-3">
                                 <div class="p-2 bg-sky-500/10 rounded-lg text-sky-400">
@@ -203,7 +346,7 @@
                     </div>
 
                     <!-- PC-Note.txt -->
-                    <div class="bg-cardbg border border-cardborder rounded-xl p-4 flex flex-col justify-between hover:border-cyan-500/40 transition-all duration-300 group">
+                    <div class="reveal-up bg-cardbg border border-cardborder rounded-xl p-4 flex flex-col justify-between hover:border-cyan-500/40 hover:-translate-y-0.5 transition-all duration-300 group">
                         <div class="mb-4">
                             <div class="flex items-center justify-between mb-3">
                                 <div class="p-2 bg-slate-500/10 rounded-lg text-slate-400">
@@ -220,7 +363,7 @@
                     </div>
 
                     <!-- throttel stop setting.png -->
-                    <div class="bg-cardbg border border-cardborder rounded-xl p-4 flex flex-col justify-between hover:border-cyan-500/40 transition-all duration-300 group">
+                    <div class="reveal-up bg-cardbg border border-cardborder rounded-xl p-4 flex flex-col justify-between hover:border-cyan-500/40 hover:-translate-y-0.5 transition-all duration-300 group">
                         <div class="mb-4">
                             <div class="flex items-center justify-between mb-3">
                                 <div class="p-2 bg-pink-500/10 rounded-lg text-pink-400">
@@ -321,27 +464,51 @@
 
     <!-- JavaScript logic cho Tabs và Chơi game -->
     <script>
+        const TAB_IDS = ['downloads', 'games', 'markdown'];
+        let currentTab = 'downloads';
+
+        function moveDesktopIndicator(tabId) {
+            const indicator = document.getElementById('tab-indicator');
+            const btn = document.getElementById(`btn-${tabId}`);
+            if (!indicator || !btn) return;
+            indicator.style.left = btn.offsetLeft + 'px';
+            indicator.style.width = btn.offsetWidth + 'px';
+        }
+
         function switchTab(tabId) {
-            // Hide all tabs
-            ['downloads', 'games', 'markdown'].forEach(id => {
-                const tab = document.getElementById(`tab-${id}`);
+            if (tabId === currentTab) return;
+            const prevTab = document.getElementById(`tab-${currentTab}`);
+            const nextTab = document.getElementById(`tab-${tabId}`);
+
+            // Desktop nav buttons (chỉ đổi màu chữ, pill nền sẽ tự trượt)
+            TAB_IDS.forEach(id => {
                 const btn = document.getElementById(`btn-${id}`);
-                
-                if (tab) tab.classList.add('hidden');
-                if (btn) {
-                    btn.className = "tab-btn px-3.5 py-1.5 rounded-lg text-xs font-mono font-medium transition-all duration-200 flex items-center gap-2 text-slate-400 hover:text-white hover:bg-slate-800/60 border border-transparent";
-                }
+                if (btn) btn.className = "tab-btn relative z-10 px-3.5 py-1.5 rounded-lg text-xs font-mono font-medium flex items-center gap-2 " + (id === tabId ? "text-indigo-300" : "text-slate-400 hover:text-white");
+
+                const mbtn = document.getElementById(`mbtn-${id}`);
+                if (mbtn) mbtn.classList.toggle('active', id === tabId);
             });
+            moveDesktopIndicator(tabId);
 
-            // Show active tab
-            const activeTab = document.getElementById(`tab-${tabId}`);
-            if (activeTab) activeTab.classList.remove('hidden');
-
-            // Active button style
-            const activeBtn = document.getElementById(`btn-${tabId}`);
-            if (activeBtn) {
-                activeBtn.className = "tab-btn px-3.5 py-1.5 rounded-lg text-xs font-mono font-medium transition-all duration-200 flex items-center gap-2 bg-indigo-600/20 text-indigo-300 border border-indigo-500/40 shadow-sm shadow-indigo-500/10";
+            // Cross-fade mượt giữa 2 tab thay vì bật/tắt đột ngột
+            if (prevTab) {
+                prevTab.style.animation = 'fadeIn 0.18s ease reverse both';
+                setTimeout(() => {
+                    prevTab.classList.add('hidden');
+                    prevTab.classList.remove('tab-panel');
+                    prevTab.style.animation = '';
+                }, 160);
             }
+            if (nextTab) {
+                nextTab.classList.remove('hidden');
+                nextTab.classList.add('tab-panel');
+                // Re-trigger animation
+                nextTab.style.animation = 'none';
+                void nextTab.offsetWidth;
+                nextTab.style.animation = '';
+            }
+
+            currentTab = tabId;
 
             // Tự động kích hoạt vẽ lại Mermaid khi người dùng bấm vào tab Markdown
             if (tabId === 'markdown') {
@@ -353,6 +520,25 @@
                 }
             }
         }
+
+        // Đặt vị trí pill trượt ngay khi tải trang, và canh lại khi resize
+        window.addEventListener('load', () => moveDesktopIndicator(currentTab));
+        window.addEventListener('resize', () => moveDesktopIndicator(currentTab));
+
+        // Hiệu ứng xuất hiện mượt mà khi cuộn tới các thẻ (card)
+        const revealObserver = new IntersectionObserver((entries) => {
+            entries.forEach((entry, i) => {
+                if (entry.isIntersecting) {
+                    const el = entry.target;
+                    const delay = Array.from(el.parentElement?.children || []).indexOf(el) * 60;
+                    el.style.transitionDelay = `${Math.min(delay, 240)}ms`;
+                    el.classList.add('in-view');
+                    revealObserver.unobserve(el);
+                }
+            });
+        }, { threshold: 0.15, rootMargin: '0px 0px -40px 0px' });
+
+        document.querySelectorAll('.reveal-up').forEach(el => revealObserver.observe(el));
 
         function playGame(gamePath) {
             document.getElementById('game-frame').src = gamePath;

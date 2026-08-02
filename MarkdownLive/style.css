@@ -252,6 +252,9 @@ body {
 
 /* Responsive (Chuyển sang dạng dọc trên màn hình nhỏ) */
 @media (max-width: 768px) {
+    .logo h1 {
+        display: none;
+    }
     .workspace {
         flex-direction: column;
     }
