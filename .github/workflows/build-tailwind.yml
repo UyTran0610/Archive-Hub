@@ -1,0 +1,38 @@
+name: Build Tailwind CSS
+
+on:
+  push:
+    branches: [main]
+    # Không chạy lại nếu commit chỉ đụng vào chính file CSS đã build (tránh vòng lặp vô hạn)
+    paths-ignore:
+      - "dist/**"
+  workflow_dispatch: # cho phép bấm "Run workflow" thủ công trên GitHub
+
+# Cho phép workflow commit ngược lại vào repo
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Cài dependency
+        run: npm ci
+
+      - name: Build Tailwind CSS (purge + minify)
+        run: npm run build:css
+
+      - name: Commit CSS đã build (nếu có thay đổi)
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "chore: build Tailwind CSS [skip ci]"
+          file_pattern: dist/output.css

@@ -4,172 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Uy's Archive Hub</title>
-    <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    fontFamily: {
-                        sans: ['Inter', 'sans-serif'],
-                        mono: ['JetBrains Mono', 'monospace'],
-                    },
-                    colors: {
-                        darkbg: '#030712',
-                        cardbg: '#0b0f19',
-                        cardborder: 'rgba(255, 255, 255, 0.08)',
-                        cardborderHover: 'rgba(99, 102, 241, 0.4)',
-                        accent: '#6366f1',
-                        accentCyan: '#06b6d4'
-                    }
-                }
-            }
-        }
-    </script>
-    <style>
-        /* Custom scrollbar */
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: #030712; }
-        ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 9999px; }
-        ::-webkit-scrollbar-thumb:hover { background: #334155; }
-        
-        /* Subtle Grid Background Effect */
-        .bg-grid-pattern {
-            background-size: 30px 30px;
-            background-image: 
-                linear-gradient(to right, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
-                linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
-        }
-
-        /* Markdown Live - Fullscreen mode */
-        #markdown-container:fullscreen,
-        #markdown-container:-webkit-full-screen {
-            width: 100vw;
-            height: 100vh;
-            border-radius: 0;
-            background: #0b0f19;
-        }
-
-        /* ============ Motion system ============ */
-        @keyframes fadeSlideDown {
-            from { opacity: 0; transform: translateY(-10px); }
-            to   { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes fadeSlideUp {
-            from { opacity: 0; transform: translateY(16px); }
-            to   { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to   { opacity: 1; }
-        }
-        @keyframes popIn {
-            0%   { opacity: 0; transform: scale(0.92); }
-            100% { opacity: 1; transform: scale(1); }
-        }
-        @keyframes ambientDrift {
-            0%, 100% { transform: translate(-50%, 0) scale(1); opacity: 0.9; }
-            50%      { transform: translate(-50%, 12px) scale(1.04); opacity: 1; }
-        }
-        @keyframes indicatorPulse {
-            0%, 100% { box-shadow: 0 0 0 0 rgba(99,102,241,0.35); }
-            50%      { box-shadow: 0 0 0 4px rgba(99,102,241,0); }
-        }
-
-        .anim-header { animation: fadeSlideDown 0.6s cubic-bezier(0.16, 1, 0.3, 1) both; }
-        .anim-ambient { animation: ambientDrift 10s ease-in-out infinite; }
-
-        .reveal-up {
-            opacity: 0;
-            transform: translateY(16px);
-            transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1), transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-        .reveal-up.in-view {
-            opacity: 1;
-            transform: translateY(0);
-        }
-
-        /* Section panel cross-fade (tab content) */
-        .tab-panel {
-            animation: fadeSlideUp 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
-        }
-
-        /* Button micro-interaction */
-        .tab-btn, .game-btn, a[download], button {
-            transition: transform 0.15s ease, background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
-        }
-        .tab-btn:active, .game-btn:active, a[download]:active {
-            transform: scale(0.96);
-        }
-
-        /* Sliding active pill behind desktop tabs */
-        #tab-indicator {
-            transition: left 0.35s cubic-bezier(0.16, 1, 0.3, 1), width 0.35s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-
-        /* ============ Mobile bottom navigation ============ */
-        .mobile-nav-btn {
-            position: relative;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 3px;
-            flex: 1;
-            padding: 8px 4px 6px;
-            font-family: 'JetBrains Mono', monospace;
-        }
-        .mobile-nav-btn .mnb-icon {
-            width: 34px;
-            height: 34px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 10px;
-            transition: background-color 0.25s ease, color 0.25s ease, transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
-        }
-        .mobile-nav-btn.active .mnb-icon {
-            background-color: rgba(99, 102, 241, 0.16);
-            color: #a5b4fc;
-            transform: translateY(-2px);
-            animation: indicatorPulse 2.2s ease-in-out infinite;
-        }
-        .mobile-nav-btn .mnb-label {
-            font-size: 10px;
-            letter-spacing: 0.02em;
-            color: #64748b;
-            transition: color 0.25s ease, transform 0.25s ease;
-        }
-        .mobile-nav-btn.active .mnb-label {
-            color: #a5b4fc;
-            transform: translateY(-2px);
-        }
-        .mobile-nav-btn .mnb-dot {
-            position: absolute;
-            top: 2px;
-            width: 4px;
-            height: 4px;
-            border-radius: 9999px;
-            background: #6366f1;
-            opacity: 0;
-            transition: opacity 0.25s ease;
-        }
-        .mobile-nav-btn.active .mnb-dot { opacity: 1; }
-
-        @media (prefers-reduced-motion: reduce) {
-            *, *::before, *::after {
-                animation-duration: 0.001ms !important;
-                animation-iteration-count: 1 !important;
-                transition-duration: 0.001ms !important;
-                scroll-behavior: auto !important;
-            }
-        }
-    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- Chỉ nạp đúng style Font Awesome đang dùng (solid + brands) thay vì all.min.css (bao gồm cả regular/duotone/sharp không dùng tới) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/fontawesome.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/solid.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/brands.min.css">
+    <!-- CSS Tailwind đã được build sẵn (tĩnh, đã purge + minify) bởi GitHub Actions, thay cho cdn.tailwindcss.com -->
+    <link rel="stylesheet" href="dist/output.css">
 </head>
 <body class="bg-darkbg text-slate-300 font-sans min-h-screen flex flex-col bg-grid-pattern relative selection:bg-indigo-500/30 selection:text-indigo-200">
 
@@ -419,7 +262,7 @@
                     <div class="w-12"></div>
                 </div>
                 <!-- Frame -->
-                <iframe id="game-frame" src="Html-Games/2048.html" class="w-full flex-1 border-none bg-black"></iframe>
+                <iframe id="game-frame" data-src="Html-Games/2048.html" loading="lazy" class="w-full flex-1 border-none bg-black"></iframe>
             </div>
         </section>
 
@@ -443,7 +286,7 @@
                     <i class="fa-solid fa-expand text-xs" id="fullscreen-icon-markdown"></i>
                 </button>
                 <!-- Frame -->
-                <iframe src="MarkdownLive/MarkdownLive.html" class="w-full flex-1 border-none"></iframe>
+                <iframe id="markdown-frame" data-src="MarkdownLive/MarkdownLive.html" loading="lazy" class="w-full flex-1 border-none"></iframe>
             </div>
         </section>
 
@@ -510,14 +353,37 @@
 
             currentTab = tabId;
 
-            // Tự động kích hoạt vẽ lại Mermaid khi người dùng bấm vào tab Markdown
+            // Chỉ nạp (set src) iframe Game khi người dùng thực sự mở tab Game
+            if (tabId === 'games') {
+                lazyLoadFrame(document.getElementById('game-frame'));
+            }
+
+            // Chỉ nạp iframe Markdown khi mở tab Markdown, và vẽ lại Mermaid sau khi frame sẵn sàng
             if (tabId === 'markdown') {
-                const iframe = document.querySelector('#tab-markdown iframe');
-                if (iframe && iframe.contentWindow && typeof iframe.contentWindow.renderMarkdown === 'function') {
-                    setTimeout(() => {
-                        iframe.contentWindow.renderMarkdown();
-                    }, 150);
+                const mdFrame = document.getElementById('markdown-frame');
+                const isFirstLoad = mdFrame && !mdFrame.getAttribute('src');
+                lazyLoadFrame(mdFrame);
+
+                const renderIfReady = () => {
+                    if (mdFrame && mdFrame.contentWindow && typeof mdFrame.contentWindow.renderMarkdown === 'function') {
+                        mdFrame.contentWindow.renderMarkdown();
+                    }
+                };
+
+                if (isFirstLoad) {
+                    // Lần đầu: đợi iframe load xong hẳn rồi mới gọi renderMarkdown
+                    mdFrame.addEventListener('load', () => setTimeout(renderIfReady, 150), { once: true });
+                } else {
+                    // Các lần sau: iframe đã sẵn, chỉ cần trigger vẽ lại
+                    setTimeout(renderIfReady, 150);
                 }
+            }
+        }
+
+        // Chỉ gán src thật cho iframe (bắt đầu tải) khi cần, tránh tốn băng thông/RAM lúc mới vào trang
+        function lazyLoadFrame(iframe) {
+            if (iframe && !iframe.getAttribute('src') && iframe.dataset.src) {
+                iframe.src = iframe.dataset.src;
             }
         }
 
