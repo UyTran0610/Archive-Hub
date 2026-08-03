@@ -1,0 +1,20 @@
+# In-Game Graphics Settings for GTX 1650
+
+FPS: 60
+Render Resolution: 0.8 (or 0.9)
+Shadow Quality: Medium
+Global Illumination: Medium
+Visual Effects: Medium
+SFX Quality: Medium
+Environment Detail: Highest
+Anti-Aliasing: FSR 2.0
+
+Volumetric Fog: ON
+Reflections: On
+Motion Blur: OFF
+Bloom: On
+Crowd Density: High
+Co-op Teammate Effects: Partially OFF
+Supserface Scattering: OFF
+Anisotropic Filtering: 16x
+Dynamic Character Resolution: ON
