@@ -5,6 +5,7 @@ Source của [Uy's Archive Hub](https://uytran0610.github.io/Archive-Hub/) - Web
 - **Cấu hình Game (Games-Settings):**
   - **Minecraft:** Danh sách Mod, Resourcepack và file cấu hình cho nhiều bộ Shader (*BSL, Complementary, Photon, Sildur's...*).
   - **NTE Settings:** Cấu hình tối ưu file `Engine.ini`.
+  - **Genshin Impact Settings:** Cấu hình tối ưu cho Genshin Impact.
 
 - **Game HTML (Html-Games):** Chơi trực tiếp trên web không cần cài đặt:
   - **2048:** Game 2048 phong cách đáng yêu.

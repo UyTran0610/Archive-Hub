@@ -1,12 +1,12 @@
 @import "tailwindcss";
 
-/* Dark mode điều khiển bằng class .dark trên <html> (giữ đúng hành vi darkMode:'class' cũ) */
+/* Dark mode điều khiển bằng class .dark trên <html> */
 @custom-variant dark (&:where(.dark, .dark *));
 
 /* Khai báo rõ file cần quét class Tailwind (mặc định CLI đã tự quét, thêm cho chắc chắn) */
 @source "../index.html";
 
-/* ============ Theme (thay cho tailwind.config = {...} cũ) ============ */
+/* ============ Theme ============ */
 @theme {
     --font-sans: "Inter", sans-serif;
     --font-mono: "JetBrains Mono", monospace;
@@ -19,7 +19,7 @@
     --color-accentCyan: #06b6d4;
 }
 
-/* ============ CSS tùy biến gốc của dự án (giữ nguyên, chỉ chuyển vị trí) ============ */
+/* ============ CSS tùy biến gốc của dự án ============ */
 
 /* Custom scrollbar */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
