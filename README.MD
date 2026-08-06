@@ -21,6 +21,11 @@ Source của [Uy's Archive Hub](https://uytran0610.github.io/Archive-Hub/) - Web
   - Tô màu mã nguồn (Syntax Highlighting).
   - Xuất PDF & Sao chép nhanh.
 
-- **Tiện ích khác (Misc):**
-  - Python Script downscale video 4K/1080p → 720p hàng loạt.
+- **Công cụ (Tools):**
   - Bộ công cụ `.bat`/`.cmd` dọn dẹp bộ nhớ tạm & cache PC.
+  - Python Script downscale video 4K/1080p → 720p hàng loạt.
+  - Python Script tự động thu thập bình luận trên youtube.
+
+- **Tệp tin khác (Misc):**
+  - My PC Note.txt **(chỉ được thiết kế riêng cho phần cứng của tôi. Có thể gây lỗi trên các hệ thống khác.)**
+  - My Throttel Stop Setting.png **(chỉ được thiết kế riêng cho phần cứng của tôi. Có thể gây lỗi trên các hệ thống khác.)**
