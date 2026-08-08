@@ -25,13 +25,14 @@
     font-family:'Baloo 2','Trebuchet MS',sans-serif;
     color:var(--ink);
     display:flex; align-items:center; justify-content:center;
-    touch-action: manipulation;
+    touch-action: none;
   }
 
   #stage{
     position:relative;
-    width:min(94vw, 430px);
     aspect-ratio: 400 / 650;
+    width: min(92vw, 400px, calc(92vh * 400 / 650));
+    height: auto;
     border-radius:20px;
     overflow:hidden;
     box-shadow:

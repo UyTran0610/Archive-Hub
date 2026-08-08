@@ -4,6 +4,22 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Uy's Archive Hub</title>
+    <meta name="description" content="Kho lưu trữ cá nhân của Uy: cấu hình game đã tinh chỉnh, công cụ tự viết, trình xem Markdown trực tiếp và vài game HTML nhỏ.">
+    <meta name="theme-color" content="#030712">
+    <meta name="color-scheme" content="dark">
+    <meta name="robots" content="index, follow">
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Uy's Archive Hub">
+    <meta property="og:description" content="Kho lưu trữ cá nhân: cấu hình game, công cụ tự viết, trình xem Markdown trực tiếp và vài game HTML nhỏ.">
+    <meta property="og:locale" content="vi_VN">
+    <meta name="twitter:card" content="summary">
+
+    <!-- Favicon -->
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
+    <link rel="alternate icon" href="favicon.svg">
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -15,81 +31,90 @@
 </head>
 <body class="bg-darkbg text-slate-300 font-sans min-h-screen flex flex-col bg-grid-pattern relative selection:bg-indigo-500/30 selection:text-indigo-200">
 
+    <!-- Bỏ qua đến nội dung chính (bàn phím) -->
+    <a href="#main-content" class="skip-link">Chuyển đến nội dung chính</a>
+
+    <noscript>
+        <div class="bg-darkbg text-slate-400 text-center text-xs font-mono py-3 px-4 border-b border-cardborder">
+            Trang này cần JavaScript để chuyển tab và tải nội dung. Vui lòng bật JavaScript trong trình duyệt.
+        </div>
+    </noscript>
+
     <!-- Ambient Glowing Background Effect -->
-    <div class="anim-ambient fixed top-0 left-1/2 w-full max-w-7xl h-[350px] bg-gradient-to-b from-indigo-500/10 via-cyan-500/5 to-transparent blur-3xl pointer-events-none -z-10"></div>
+    <div class="anim-ambient fixed top-0 left-1/2 w-full max-w-7xl h-[350px] bg-gradient-to-b from-indigo-500/10 via-cyan-500/5 to-transparent blur-3xl pointer-events-none -z-10" aria-hidden="true"></div>
 
     <!-- Header Navigation -->
     <header class="anim-header border-b border-cardborder bg-darkbg/80 backdrop-blur-md sticky top-0 z-50">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex items-center justify-between h-16">
-                
+
                 <!-- Brand / Terminal Title -->
                 <div class="flex items-center space-x-3">
                     <div class="p-2 bg-indigo-500/10 border border-indigo-500/20 rounded-lg text-indigo-400">
-                        <i class="fa-solid fa-terminal text-lg"></i>
+                        <i class="fa-solid fa-terminal text-lg" aria-hidden="true"></i>
                     </div>
                     <div>
                         <div class="flex items-center gap-2">
                             <span class="font-bold text-sm sm:text-base tracking-tight text-white font-mono">UY'S ARCHIVE HUB</span>
                         </div>
-                        <p class="hidden sm:block text-[11px] text-slate-500 font-mono">// system.repository.online</p>
+                        <p class="hidden sm:block text-[11px] text-slate-500 font-mono">// system.repository.online<span class="term-cursor" aria-hidden="true"></span></p>
                     </div>
                 </div>
 
                 <!-- Navigation Tabs (desktop / tablet) -->
-                <nav class="hidden sm:flex relative items-center space-x-1 bg-slate-900/80 p-1 rounded-xl border border-cardborder">
-                    <span id="tab-indicator" class="absolute top-1 bottom-1 rounded-lg bg-indigo-600/20 border border-indigo-500/40 shadow-sm shadow-indigo-500/10 -z-0"></span>
-                    <button onclick="switchTab('downloads')" id="btn-downloads" class="tab-btn relative z-10 px-3.5 py-1.5 rounded-lg text-xs font-mono font-medium flex items-center gap-2 text-indigo-300">
-                        <i class="fa-solid fa-download"></i>
+                <nav class="hidden sm:flex relative items-center space-x-1 bg-slate-900/80 p-1 rounded-xl border border-cardborder" role="tablist" aria-label="Danh mục nội dung">
+                    <span id="tab-indicator" class="absolute top-1 bottom-1 rounded-lg bg-indigo-600/20 border border-indigo-500/40 shadow-sm shadow-indigo-500/10 -z-0" aria-hidden="true"></span>
+                    <button onclick="switchTab('downloads')" id="btn-downloads" role="tab" aria-selected="true" aria-controls="tab-downloads" class="tab-btn relative z-10 px-3.5 py-1.5 rounded-lg text-xs font-mono font-medium flex items-center gap-2 text-indigo-300">
+                        <i class="fa-solid fa-download" aria-hidden="true"></i>
                         <span>Tải về</span>
                     </button>
-                    <button onclick="switchTab('games')" id="btn-games" class="tab-btn relative z-10 px-3.5 py-1.5 rounded-lg text-xs font-mono font-medium flex items-center gap-2 text-slate-400 hover:text-white">
-                        <i class="fa-solid fa-gamepad"></i>
+                    <button onclick="switchTab('games')" id="btn-games" role="tab" aria-selected="false" aria-controls="tab-games" class="tab-btn relative z-10 px-3.5 py-1.5 rounded-lg text-xs font-mono font-medium flex items-center gap-2 text-slate-400 hover:text-white">
+                        <i class="fa-solid fa-gamepad" aria-hidden="true"></i>
                         <span>Chơi Game</span>
                     </button>
-                    <button onclick="switchTab('markdown')" id="btn-markdown" class="tab-btn relative z-10 px-3.5 py-1.5 rounded-lg text-xs font-mono font-medium flex items-center gap-2 text-slate-400 hover:text-white">
-                        <i class="fa-solid fa-code"></i>
+                    <button onclick="switchTab('markdown')" id="btn-markdown" role="tab" aria-selected="false" aria-controls="tab-markdown" class="tab-btn relative z-10 px-3.5 py-1.5 rounded-lg text-xs font-mono font-medium flex items-center gap-2 text-slate-400 hover:text-white">
+                        <i class="fa-solid fa-code" aria-hidden="true"></i>
                         <span>Markdown Live</span>
                     </button>
                 </nav>
-
-                <!-- Status pill (mobile only, replaces the old cramped tab row) -->
-                <!-- <div class="flex sm:hidden items-center gap-1.5 text-[10px] font-mono text-slate-500 border border-cardborder rounded-lg px-2 py-1">
-                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                    <span>ONLINE</span>
-                </div> -->
 
             </div>
         </div>
     </header>
 
     <!-- Mobile Bottom Navigation -->
-    <nav class="sm:hidden fixed bottom-0 left-0 right-0 z-50 bg-darkbg/90 backdrop-blur-md border-t border-cardborder pb-[max(env(safe-area-inset-bottom),0px)]">
+    <nav class="sm:hidden fixed bottom-0 left-0 right-0 z-50 bg-darkbg/90 backdrop-blur-md border-t border-cardborder pb-[max(env(safe-area-inset-bottom),0px)]" aria-label="Điều hướng chính">
         <div class="flex items-stretch">
-            <button onclick="switchTab('downloads')" id="mbtn-downloads" class="mobile-nav-btn active">
-                <span class="mnb-dot"></span>
-                <span class="mnb-icon"><i class="fa-solid fa-download text-sm"></i></span>
+            <button onclick="switchTab('downloads')" id="mbtn-downloads" class="mobile-nav-btn active" aria-current="page">
+                <span class="mnb-dot" aria-hidden="true"></span>
+                <span class="mnb-icon"><i class="fa-solid fa-download text-sm" aria-hidden="true"></i></span>
                 <span class="mnb-label">Tải về</span>
             </button>
             <button onclick="switchTab('games')" id="mbtn-games" class="mobile-nav-btn">
-                <span class="mnb-dot"></span>
-                <span class="mnb-icon"><i class="fa-solid fa-gamepad text-sm"></i></span>
+                <span class="mnb-dot" aria-hidden="true"></span>
+                <span class="mnb-icon"><i class="fa-solid fa-gamepad text-sm" aria-hidden="true"></i></span>
                 <span class="mnb-label">Game</span>
             </button>
             <button onclick="switchTab('markdown')" id="mbtn-markdown" class="mobile-nav-btn">
-                <span class="mnb-dot"></span>
-                <span class="mnb-icon"><i class="fa-solid fa-code text-sm"></i></span>
+                <span class="mnb-dot" aria-hidden="true"></span>
+                <span class="mnb-icon"><i class="fa-solid fa-code text-sm" aria-hidden="true"></i></span>
                 <span class="mnb-label">Markdown</span>
             </button>
         </div>
     </nav>
 
     <!-- Main Content -->
-    <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 pb-24 sm:pb-8">
+    <main id="main-content" tabindex="-1" class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 pb-8">
 
         <!-- TAB 1: DOWNLOADS -->
-        <section id="tab-downloads" class="tab-panel space-y-10">
-            
+        <section id="tab-downloads" class="tab-panel space-y-10" role="tabpanel" aria-labelledby="btn-downloads">
+
+            <!-- Intro strip -->
+            <div class="reveal-up font-mono text-xs sm:text-sm leading-relaxed">
+                <p class="text-slate-500"><span class="text-emerald-400">guest@archive</span><span class="text-slate-600">:</span><span class="text-indigo-400">~</span><span class="text-slate-600">$</span> cat README.md</p>
+                <p class="mt-1.5 text-slate-400 max-w-3xl font-sans text-[13px] sm:text-sm">Kho lưu trữ cá nhân — cấu hình game đã tinh chỉnh, vài công cụ Python tự viết, và những file hay dùng.</p>
+            </div>
+
             <!-- Section 1: Game Settings -->
             <div>
                 <div class="flex items-center justify-between mb-4 border-b border-cardborder/60 pb-3">
@@ -105,7 +130,7 @@
                         <div>
                             <div class="flex items-start justify-between mb-3">
                                 <div class="p-2.5 bg-emerald-500/10 border border-emerald-500/20 rounded-lg text-emerald-400 group-hover:scale-105 transition-transform duration-200">
-                                    <i class="fa-solid fa-cube text-xl"></i>
+                                    <i class="fa-solid fa-cube text-xl" aria-hidden="true"></i>
                                 </div>
                                 <span class="text-[10px] font-mono bg-slate-800 text-slate-400 px-2 py-0.5 rounded border border-slate-700">[DIR] CONFIG</span>
                             </div>
@@ -114,8 +139,8 @@
                         </div>
                         <div class="mt-5 pt-4 border-t border-cardborder/40 flex items-center justify-between">
                             <span class="text-[11px] font-mono text-slate-500">GitHub Repository</span>
-                            <a href="https://github.com/UyTran0610/Archive-Hub/tree/main/Games-Settings/Minecraft-Settings" download target="_blank" class="px-3.5 py-1.5 bg-slate-800/80 hover:bg-indigo-600 text-slate-200 hover:text-white rounded-lg text-xs font-mono font-medium transition-all duration-200 flex items-center gap-2 border border-slate-700/60 hover:border-indigo-500">
-                                <i class="fa-solid fa-eye text-xs"></i> Xem chi tiết
+                            <a href="https://github.com/UyTran0610/Archive-Hub/tree/main/Games-Settings/Minecraft-Settings" download target="_blank" rel="noopener noreferrer" class="px-3.5 py-1.5 bg-slate-800/80 hover:bg-indigo-600 text-slate-200 hover:text-white rounded-lg text-xs font-mono font-medium transition-all duration-200 flex items-center gap-2 border border-slate-700/60 hover:border-indigo-500">
+                                <i class="fa-solid fa-eye text-xs" aria-hidden="true"></i> Xem chi tiết
                             </a>
                         </div>
                     </div>
@@ -125,7 +150,7 @@
                         <div>
                             <div class="flex items-start justify-between mb-3">
                                 <div class="p-2.5 bg-purple-500/10 border border-purple-500/20 rounded-lg text-purple-400 group-hover:scale-105 transition-transform duration-200">
-                                    <i class="fa-solid fa-sliders text-xl"></i>
+                                    <i class="fa-solid fa-sliders text-xl" aria-hidden="true"></i>
                                 </div>
                                 <span class="text-[10px] font-mono bg-slate-800 text-slate-400 px-2 py-0.5 rounded border border-slate-700">[DIR] CONFIG</span>
                             </div>
@@ -134,8 +159,8 @@
                         </div>
                         <div class="mt-5 pt-4 border-t border-cardborder/40 flex items-center justify-between">
                             <span class="text-[11px] font-mono text-slate-500">GitHub Repository</span>
-                            <a href="https://github.com/UyTran0610/Archive-Hub/tree/main/Games-Settings/NTE-settings" download target="_blank" class="px-3.5 py-1.5 bg-slate-800/80 hover:bg-indigo-600 text-slate-200 hover:text-white rounded-lg text-xs font-mono font-medium transition-all duration-200 flex items-center gap-2 border border-slate-700/60 hover:border-indigo-500">
-                                <i class="fa-solid fa-eye text-xs"></i> Xem chi tiết
+                            <a href="https://github.com/UyTran0610/Archive-Hub/tree/main/Games-Settings/NTE-settings" download target="_blank" rel="noopener noreferrer" class="px-3.5 py-1.5 bg-slate-800/80 hover:bg-indigo-600 text-slate-200 hover:text-white rounded-lg text-xs font-mono font-medium transition-all duration-200 flex items-center gap-2 border border-slate-700/60 hover:border-indigo-500">
+                                <i class="fa-solid fa-eye text-xs" aria-hidden="true"></i> Xem chi tiết
                             </a>
                         </div>
                     </div>
@@ -145,7 +170,7 @@
                         <div>
                             <div class="flex items-start justify-between mb-3">
                                 <div class="p-2.5 bg-purple-500/10 border border-purple-500/20 rounded-lg text-purple-400 group-hover:scale-105 transition-transform duration-200">
-                                    <i class="fa-solid fa-sliders text-xl"></i>
+                                    <i class="fa-solid fa-sliders text-xl" aria-hidden="true"></i>
                                 </div>
                                 <span class="text-[10px] font-mono bg-slate-800 text-slate-400 px-2 py-0.5 rounded border border-slate-700">[DIR] CONFIG</span>
                             </div>
@@ -154,8 +179,8 @@
                         </div>
                         <div class="mt-5 pt-4 border-t border-cardborder/40 flex items-center justify-between">
                             <span class="text-[11px] font-mono text-slate-500">GitHub Repository</span>
-                            <a href="https://github.com/UyTran0610/Archive-Hub/blob/main/Games-Settings/genshin-impact-settings.txt" target="_blank" class="px-3.5 py-1.5 bg-slate-800/80 hover:bg-indigo-600 text-slate-200 hover:text-white rounded-lg text-xs font-mono font-medium transition-all duration-200 flex items-center gap-2 border border-slate-700/60 hover:border-indigo-500">
-                                <i class="fa-solid fa-eye text-xs"></i> Xem chi tiết
+                            <a href="https://github.com/UyTran0610/Archive-Hub/blob/main/Games-Settings/genshin-impact-settings.txt" target="_blank" rel="noopener noreferrer" class="px-3.5 py-1.5 bg-slate-800/80 hover:bg-indigo-600 text-slate-200 hover:text-white rounded-lg text-xs font-mono font-medium transition-all duration-200 flex items-center gap-2 border border-slate-700/60 hover:border-indigo-500">
+                                <i class="fa-solid fa-eye text-xs" aria-hidden="true"></i> Xem chi tiết
                             </a>
                         </div>
                     </div>
@@ -178,15 +203,15 @@
                         <div class="mb-4">
                             <div class="flex items-center justify-between mb-3">
                                 <div class="p-2 bg-amber-500/10 rounded-lg text-amber-400">
-                                    <i class="fa-solid fa-broom text-base"></i>
+                                    <i class="fa-solid fa-broom text-base" aria-hidden="true"></i>
                                 </div>
                                 <span class="text-[10px] font-mono text-slate-500">Folder</span>
                             </div>
                             <h3 class="font-medium text-white text-sm group-hover:text-cyan-300 transition-colors truncate">PC-cleaner</h3>
                             <p class="text-[11px] text-slate-500 font-mono mt-0.5">Tools/PC-cleaner</p>
                         </div>
-                        <a href="https://github.com/UyTran0610/Archive-Hub/tree/main/Tools/PC-cleaner" download target="_blank" class="w-full text-center py-2 bg-slate-800/60 hover:bg-cyan-600 text-slate-300 hover:text-white rounded-lg text-xs font-mono font-medium transition-all border border-slate-700/50 flex items-center justify-center gap-2">
-                            <i class="fa-solid fa-download"></i> Tải xuống
+                        <a href="https://github.com/UyTran0610/Archive-Hub/tree/main/Tools/PC-cleaner" download target="_blank" rel="noopener noreferrer" class="w-full text-center py-2 bg-slate-800/60 hover:bg-cyan-600 text-slate-300 hover:text-white rounded-lg text-xs font-mono font-medium transition-all border border-slate-700/50 flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-download" aria-hidden="true"></i> Tải xuống
                         </a>
                     </div>
 
@@ -195,15 +220,15 @@
                         <div class="mb-4">
                             <div class="flex items-center justify-between mb-3">
                                 <div class="p-2 bg-sky-500/10 rounded-lg text-sky-400">
-                                    <i class="fa-brands fa-python text-base"></i>
+                                    <i class="fa-brands fa-python text-base" aria-hidden="true"></i>
                                 </div>
                                 <span class="text-[10px] font-mono text-sky-400 bg-sky-500/10 px-1.5 py-0.5 rounded border border-sky-500/20">.PY</span>
                             </div>
                             <h3 class="font-medium text-white text-sm group-hover:text-cyan-300 transition-colors truncate" title="batch video downscaler.py">batch video downscaler.py</h3>
                             <p class="text-[11px] text-slate-500 font-mono mt-0.5">Size: 14 KB</p>
                         </div>
-                        <a href="Tools/batch video downscaler.py" download class="w-full text-center py-2 bg-slate-800/60 hover:bg-sky-600 text-slate-300 hover:text-white rounded-lg text-xs font-mono font-medium transition-all border border-slate-700/50 flex items-center justify-center gap-2">
-                            <i class="fa-solid fa-download"></i> Tải xuống
+                        <a href="Tools/batch%20video%20downscaler.py" download class="w-full text-center py-2 bg-slate-800/60 hover:bg-sky-600 text-slate-300 hover:text-white rounded-lg text-xs font-mono font-medium transition-all border border-slate-700/50 flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-download" aria-hidden="true"></i> Tải xuống
                         </a>
                     </div>
 
@@ -212,15 +237,15 @@
                         <div class="mb-4">
                             <div class="flex items-center justify-between mb-3">
                                 <div class="p-2 bg-sky-500/10 rounded-lg text-sky-400">
-                                    <i class="fa-brands fa-python text-base"></i>
+                                    <i class="fa-brands fa-python text-base" aria-hidden="true"></i>
                                 </div>
                                 <span class="text-[10px] font-mono text-sky-400 bg-sky-500/10 px-1.5 py-0.5 rounded border border-sky-500/20">.PY</span>
                             </div>
                             <h3 class="font-medium text-white text-sm group-hover:text-cyan-300 transition-colors truncate" title="youtube comments scraper.py">youtube comments scraper.py</h3>
                             <p class="text-[11px] text-slate-500 font-mono mt-0.5">Size: 8 KB</p>
                         </div>
-                        <a href="Tools/youtube comments scraper.py" download class="w-full text-center py-2 bg-slate-800/60 hover:bg-sky-600 text-slate-300 hover:text-white rounded-lg text-xs font-mono font-medium transition-all border border-slate-700/50 flex items-center justify-center gap-2">
-                            <i class="fa-solid fa-download"></i> Tải xuống
+                        <a href="Tools/youtube%20comments%20scraper.py" download class="w-full text-center py-2 bg-slate-800/60 hover:bg-sky-600 text-slate-300 hover:text-white rounded-lg text-xs font-mono font-medium transition-all border border-slate-700/50 flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-download" aria-hidden="true"></i> Tải xuống
                         </a>
                     </div>
                 </div>
@@ -242,7 +267,7 @@
                         <div class="mb-4">
                             <div class="flex items-center justify-between mb-3">
                                 <div class="p-2 bg-slate-500/10 rounded-lg text-slate-400">
-                                    <i class="fa-solid fa-file-lines text-base"></i>
+                                    <i class="fa-solid fa-file-lines text-base" aria-hidden="true"></i>
                                 </div>
                                 <span class="text-[10px] font-mono text-slate-400 bg-slate-800 px-1.5 py-0.5 rounded border border-slate-700">.TXT</span>
                             </div>
@@ -250,8 +275,8 @@
                             <p class="text-[11px] text-slate-500 font-mono mt-0.5"> Thiết kế riêng cho phần cứng của tôi.<br>
                                                                                     Có thể gây lỗi trên các hệ thống khác.</p>
                         </div>
-                        <a href="https://github.com/UyTran0610/Archive-Hub/blob/main/Misc/My%20PC%20Note.txt" target="_blank" class="w-full text-center py-2 bg-slate-800/60 hover:bg-slate-700 text-slate-300 hover:text-white rounded-lg text-xs font-mono font-medium transition-all border border-slate-700/50 flex items-center justify-center gap-2">
-                            <i class="fa-solid fa-eye text-xs"></i> Xem chi tiết
+                        <a href="https://github.com/UyTran0610/Archive-Hub/blob/main/Misc/My%20PC%20Note.txt" target="_blank" rel="noopener noreferrer" class="w-full text-center py-2 bg-slate-800/60 hover:bg-slate-700 text-slate-300 hover:text-white rounded-lg text-xs font-mono font-medium transition-all border border-slate-700/50 flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-eye text-xs" aria-hidden="true"></i> Xem chi tiết
                         </a>
                     </div>
 
@@ -260,7 +285,7 @@
                         <div class="mb-4">
                             <div class="flex items-center justify-between mb-3">
                                 <div class="p-2 bg-pink-500/10 rounded-lg text-pink-400">
-                                    <i class="fa-solid fa-image text-base"></i>
+                                    <i class="fa-solid fa-image text-base" aria-hidden="true"></i>
                                 </div>
                                 <span class="text-[10px] font-mono text-pink-400 bg-pink-500/10 px-1.5 py-0.5 rounded border border-pink-500/20">.PNG</span>
                             </div>
@@ -268,8 +293,8 @@
                             <p class="text-[11px] text-slate-500 font-mono mt-0.5"> Thiết kế riêng cho phần cứng của tôi.<br>
                                                                                     Có thể gây lỗi trên các hệ thống khác.</p>
                         </div>
-                        <a href="https://github.com/UyTran0610/Archive-Hub/blob/main/Misc/My%20Throttel%20Stop%20Setting.png" target="_blank" class="w-full text-center py-2 bg-slate-800/60 hover:bg-pink-600 text-slate-300 hover:text-white rounded-lg text-xs font-mono font-medium transition-all border border-slate-700/50 flex items-center justify-center gap-2">
-                            <i class="fa-solid fa-eye text-xs"></i> Xem chi tiết
+                        <a href="https://github.com/UyTran0610/Archive-Hub/blob/main/Misc/My%20Throttel%20Stop%20Setting.png" target="_blank" rel="noopener noreferrer" class="w-full text-center py-2 bg-slate-800/60 hover:bg-pink-600 text-slate-300 hover:text-white rounded-lg text-xs font-mono font-medium transition-all border border-slate-700/50 flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-eye text-xs" aria-hidden="true"></i> Xem chi tiết
                         </a>
                     </div>
 
@@ -278,31 +303,31 @@
         </section>
 
         <!-- TAB 2: HTML GAMES -->
-        <section id="tab-games" class="hidden space-y-4">
+        <section id="tab-games" class="hidden space-y-4" role="tabpanel" aria-labelledby="btn-games">
             <!-- Terminal Header / Selector Bar -->
             <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-cardbg p-3.5 rounded-xl border border-cardborder">
                 <div class="flex items-center gap-2 font-mono text-xs text-slate-400">
-                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" aria-hidden="true"></span>
                     <span>HUB://GAMES_EXECUTABLE</span>
                 </div>
-                <div class="flex flex-wrap gap-2 w-full sm:w-auto">
-                    <button onclick="playGame('Html-Games/2048.html')" class="game-btn px-3 py-1.5 bg-slate-800/80 hover:bg-indigo-600 text-xs font-mono rounded-lg transition border border-slate-700/80 hover:text-white flex items-center gap-1.5">
+                <div class="flex flex-wrap gap-2 w-full sm:w-auto" role="group" aria-label="Chọn game">
+                    <button onclick="playGame('Html-Games/2048.html', this)" class="game-btn active px-3 py-1.5 bg-slate-800/80 hover:bg-indigo-600 text-xs font-mono rounded-lg transition border border-slate-700/80 hover:text-white flex items-center gap-1.5" aria-pressed="true">
                         🎮 2048
                     </button>
-                    <button onclick="playGame('Html-Games/neon-runner.html')" class="game-btn px-3 py-1.5 bg-slate-800/80 hover:bg-indigo-600 text-xs font-mono rounded-lg transition border border-slate-700/80 hover:text-white flex items-center gap-1.5">
+                    <button onclick="playGame('Html-Games/neon-runner.html', this)" class="game-btn px-3 py-1.5 bg-slate-800/80 hover:bg-indigo-600 text-xs font-mono rounded-lg transition border border-slate-700/80 hover:text-white flex items-center gap-1.5" aria-pressed="false">
                         🏎️ Neon Runner
                     </button>
-                    <button onclick="playGame('Html-Games/octopus-flappy.html')" class="game-btn px-3 py-1.5 bg-slate-800/80 hover:bg-indigo-600 text-xs font-mono rounded-lg transition border border-slate-700/80 hover:text-white flex items-center gap-1.5">
+                    <button onclick="playGame('Html-Games/octopus-flappy.html', this)" class="game-btn px-3 py-1.5 bg-slate-800/80 hover:bg-indigo-600 text-xs font-mono rounded-lg transition border border-slate-700/80 hover:text-white flex items-center gap-1.5" aria-pressed="false">
                         🐙 Octopus Flappy
                     </button>
                 </div>
             </div>
 
             <!-- Game Window Screen Mockup -->
-            <div class="w-full bg-black border border-cardborder rounded-xl overflow-hidden h-[85vh] min-h-[560px] flex flex-col shadow-2xl">
+            <div id="game-container" style="touch-action: none;" class="w-full bg-black border border-cardborder rounded-xl overflow-hidden h-[85vh] min-h-[560px] flex flex-col shadow-2xl">
                 <!-- OS Window Bar -->
                 <div class="bg-slate-900 border-b border-cardborder px-4 py-2 flex items-center justify-between">
-                    <div class="flex items-center space-x-2">
+                    <div class="flex items-center space-x-2" aria-hidden="true">
                         <div class="w-3 h-3 rounded-full bg-rose-500/80"></div>
                         <div class="w-3 h-3 rounded-full bg-amber-500/80"></div>
                         <div class="w-3 h-3 rounded-full bg-emerald-500/80"></div>
@@ -313,48 +338,51 @@
                     <div class="w-12"></div>
                 </div>
                 <!-- Frame -->
-                <iframe id="game-frame" data-src="Html-Games/2048.html" loading="lazy" class="w-full flex-1 border-none bg-black"></iframe>
+                <div class="relative flex-1">
+                    <div id="game-frame-loader" class="frame-loader">
+                        <div class="spinner" aria-hidden="true"></div>
+                        <p class="font-mono text-[11px] text-slate-500 flex items-center gap-2">Đang tải game<span class="loader-dots" aria-hidden="true"><span></span><span></span><span></span></span></p>
+                    </div>
+                    <iframe id="game-frame" title="Cửa sổ chơi game HTML" data-src="Html-Games/2048.html" loading="lazy" onload="hideFrameLoader(this)" class="w-full h-full border-none bg-black"></iframe>
+                </div>
             </div>
         </section>
 
         <!-- TAB 3: MARKDOWN LIVE -->
-        <section id="tab-markdown" class="hidden">
+        <section id="tab-markdown" class="hidden" role="tabpanel" aria-labelledby="btn-markdown">
             <div id="markdown-container" class="w-full h-[82vh] bg-cardbg border border-cardborder rounded-xl overflow-hidden flex flex-col shadow-2xl relative">
-                <!-- IDE Window Bar -->
-                <!-- <div class="bg-slate-900 border-b border-cardborder px-4 py-2 flex items-center justify-between">
-                    <div class="flex items-center space-x-2">
-                        <div class="w-3 h-3 rounded-full bg-rose-500/80"></div>
-                        <div class="w-3 h-3 rounded-full bg-amber-500/80"></div>
-                        <div class="w-3 h-3 rounded-full bg-emerald-500/80"></div>
-                        <span class="ml-2 text-xs font-mono text-slate-400">MarkdownLive.html</span>
-                    </div>
-                    <div class="text-[11px] font-mono text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded border border-indigo-500/20">
-                        LIVE EDITOR
-                    </div>
-                </div> -->
                 <!-- Fullscreen Toggle Button -->
-                <button onclick="toggleMarkdownFullscreen()" id="btn-fullscreen-markdown" title="Phóng to toàn màn hình" class="absolute top-[60px] right-3 z-20 w-8 h-8 flex items-center justify-center bg-slate-900/80 hover:bg-indigo-600 text-slate-300 hover:text-white rounded-lg border border-cardborder hover:border-indigo-500 transition-all duration-200 backdrop-blur-sm">
-                    <i class="fa-solid fa-expand text-xs" id="fullscreen-icon-markdown"></i>
+                <button onclick="toggleMarkdownFullscreen()" id="btn-fullscreen-markdown" title="Phóng to toàn màn hình" aria-pressed="false" class="absolute top-[60px] right-3 z-20 w-8 h-8 flex items-center justify-center bg-slate-900/80 hover:bg-indigo-600 text-slate-300 hover:text-white rounded-lg border border-cardborder hover:border-indigo-500 transition-all duration-200 backdrop-blur-sm">
+                    <i class="fa-solid fa-expand text-xs" id="fullscreen-icon-markdown" aria-hidden="true"></i>
                 </button>
                 <!-- Frame -->
-                <iframe id="markdown-frame" data-src="MarkdownLive/MarkdownLive.html" loading="lazy" class="w-full flex-1 border-none"></iframe>
+                <div class="relative flex-1">
+                    <div id="markdown-frame-loader" class="frame-loader">
+                        <div class="spinner" aria-hidden="true"></div>
+                        <p class="font-mono text-[11px] text-slate-500 flex items-center gap-2">Đang tải trình soạn thảo<span class="loader-dots" aria-hidden="true"><span></span><span></span><span></span></span></p>
+                    </div>
+                    <iframe id="markdown-frame" title="Trình xem Markdown trực tiếp" data-src="MarkdownLive/MarkdownLive.html" loading="lazy" onload="hideFrameLoader(this)" class="w-full h-full border-none"></iframe>
+                </div>
             </div>
         </section>
 
     </main>
 
-    <!-- Developer Footer -->
-    <!-- <footer class="border-t border-cardborder bg-darkbg/90 py-4 text-xs font-mono text-slate-500">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-2">
+    <!-- Footer -->
+    <footer class="border-t border-cardborder bg-darkbg/90 pt-4 pb-24 sm:pb-4 text-xs font-mono text-slate-500">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-2 text-center sm:text-left">
             <div class="flex items-center gap-2">
-                <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                <span class="w-2 h-2 rounded-full bg-emerald-500" aria-hidden="true"></span>
                 <span>System Status: Operational</span>
             </div>
-            <div>
-                Hosted on <span class="text-slate-400">GitHub Pages</span> • Engineered by UyTran
+            <div class="flex items-center gap-3">
+                <span>Hosted on <span class="text-slate-400">GitHub Pages</span> • Engineered by UyTran</span>
+                <a href="https://github.com/UyTran0610" target="_blank" rel="noopener noreferrer" aria-label="Trang GitHub của UyTran" class="text-slate-500 hover:text-indigo-400 transition-colors">
+                    <i class="fa-brands fa-github text-sm" aria-hidden="true"></i>
+                </a>
             </div>
         </div>
-    </footer> -->
+    </footer>
 
     <!-- JavaScript logic cho Tabs và Chơi game -->
     <script>
@@ -377,10 +405,20 @@
             // Desktop nav buttons (chỉ đổi màu chữ, pill nền sẽ tự trượt)
             TAB_IDS.forEach(id => {
                 const btn = document.getElementById(`btn-${id}`);
-                if (btn) btn.className = "tab-btn relative z-10 px-3.5 py-1.5 rounded-lg text-xs font-mono font-medium flex items-center gap-2 " + (id === tabId ? "text-indigo-300" : "text-slate-400 hover:text-white");
+                if (btn) {
+                    btn.className = "tab-btn relative z-10 px-3.5 py-1.5 rounded-lg text-xs font-mono font-medium flex items-center gap-2 " + (id === tabId ? "text-indigo-300" : "text-slate-400 hover:text-white");
+                    btn.setAttribute('aria-selected', id === tabId ? 'true' : 'false');
+                }
 
                 const mbtn = document.getElementById(`mbtn-${id}`);
-                if (mbtn) mbtn.classList.toggle('active', id === tabId);
+                if (mbtn) {
+                    mbtn.classList.toggle('active', id === tabId);
+                    if (id === tabId) {
+                        mbtn.setAttribute('aria-current', 'page');
+                    } else {
+                        mbtn.removeAttribute('aria-current');
+                    }
+                }
             });
             moveDesktopIndicator(tabId);
 
@@ -438,6 +476,13 @@
             }
         }
 
+        // Ẩn overlay loading khi iframe (game/markdown) đã tải xong
+        function hideFrameLoader(iframe) {
+            const wrapper = iframe.closest('.relative');
+            const loader = wrapper ? wrapper.querySelector('.frame-loader') : null;
+            if (loader) loader.classList.add('is-hidden');
+        }
+
         // Đặt vị trí pill trượt ngay khi tải trang, và canh lại khi resize
         window.addEventListener('load', () => moveDesktopIndicator(currentTab));
         window.addEventListener('resize', () => moveDesktopIndicator(currentTab));
@@ -457,13 +502,53 @@
 
         document.querySelectorAll('.reveal-up').forEach(el => revealObserver.observe(el));
 
-        function playGame(gamePath) {
-            document.getElementById('game-frame').src = gamePath;
+function playGame(gamePath, btnEl) {
+            const iframe = document.getElementById('game-frame');
+            const loader = document.getElementById('game-frame-loader');
+            if (loader) loader.classList.remove('is-hidden');
+            iframe.src = gamePath;
+
             const pathDisplay = document.getElementById('game-path-display');
             if (pathDisplay) {
                 pathDisplay.innerText = gamePath;
             }
+
+            document.querySelectorAll('.game-btn').forEach(b => {
+                const isActive = b === btnEl;
+                b.classList.toggle('active', isActive);
+                b.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+            });
+
+            // Tự động focus vào iframe sau khi chuyển trò chơi
+            setTimeout(() => {
+                if (iframe) iframe.focus();
+            }, 100);
         }
+
+        // Tự động focus vào game khi nhấp chuột vào bất cứ đâu trong khung viền ngoài của game
+        const gameContainer = document.getElementById('game-container');
+        if (gameContainer) {
+            gameContainer.addEventListener('click', () => {
+                const iframe = document.getElementById('game-frame');
+                if (iframe) {
+                    iframe.focus();
+                }
+            });
+        }
+
+        // Chặn phím Space và mũi tên di chuyển làm cuộn trang chính khi đang ở tab Game
+        window.addEventListener('keydown', (e) => {
+            if (currentTab === 'games') {
+                const keysToPrevent = ['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' '];
+                if (keysToPrevent.includes(e.key) || keysToPrevent.includes(e.code)) {
+                    e.preventDefault();
+                    const iframe = document.getElementById('game-frame');
+                    if (iframe && document.activeElement !== iframe) {
+                        iframe.focus();
+                    }
+                }
+            }
+        }, { passive: false });
 
         // Toggle fullscreen cho khu vực Markdown Live
         function toggleMarkdownFullscreen() {
@@ -495,9 +580,11 @@
             if (isFullscreen) {
                 icon.className = 'fa-solid fa-compress text-sm';
                 btn.title = 'Thoát toàn màn hình';
+                btn.setAttribute('aria-pressed', 'true');
             } else {
                 icon.className = 'fa-solid fa-expand text-sm';
                 btn.title = 'Phóng to toàn màn hình';
+                btn.setAttribute('aria-pressed', 'false');
             }
         }
 

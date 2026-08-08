@@ -14,6 +14,7 @@
             color: #fff;
             user-select: none;
             -webkit-user-select: none;
+            touch-action: none;
         }
         #canvas-container {
             width: 100vw;
@@ -836,6 +837,16 @@
         }
 
         window.addEventListener('keydown', (e) => {
+            // Chặn toàn bộ phím điều hướng, phím WASD và Space để tránh lướt trang web
+            const gameKeys = [
+                'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown',
+                'KeyA', 'KeyD', 'KeyW', 'KeyS',
+                'Space'
+            ];
+            if (gameKeys.includes(e.code)) {
+                e.preventDefault();
+            }
+
             if (e.code === 'ArrowLeft' || e.code === 'KeyA') handleInput('left');
             if (e.code === 'ArrowRight' || e.code === 'KeyD') handleInput('right');
             if (e.code === 'Space' || e.code === 'ArrowUp' || e.code === 'KeyW') handleInput('jump');
