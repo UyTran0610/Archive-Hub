@@ -41,7 +41,8 @@
     width: 100vw;
     height: 100vh;
     border-radius: 0;
-    background: #ffffff;
+    border: none !important;
+    background: #030712 !important;
 }
 
 /* ============ Accessibility ============ */

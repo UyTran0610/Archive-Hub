@@ -3,9 +3,34 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="light dark">
     <title>Markdown Live</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.5.1/github-markdown-light.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">
+    <link id="theme-markdown-css" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.5.1/github-markdown-light.min.css">
+    <link id="theme-hljs-css" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">
+    <script>
+        // Xác định theme (sáng/tối) sớm nhất có thể để tránh hiệu ứng nháy sai giao diện.
+        // Ưu tiên lựa chọn đã lưu của người dùng, nếu không có thì theo theme của thiết bị.
+        (function () {
+            var theme = 'light';
+            try {
+                var stored = localStorage.getItem('markdown-live-theme');
+                if (stored === 'light' || stored === 'dark') {
+                    theme = stored;
+                } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                    theme = 'dark';
+                }
+            } catch (e) {}
+
+            document.documentElement.setAttribute('data-theme', theme);
+
+            if (theme === 'dark') {
+                var mdLink = document.getElementById('theme-markdown-css');
+                var hljsLink = document.getElementById('theme-hljs-css');
+                if (mdLink) mdLink.href = 'https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.5.1/github-markdown-dark.min.css';
+                if (hljsLink) hljsLink.href = 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css';
+            }
+        })();
+    </script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">  
     <link rel="stylesheet" href="style.css"> 
     <script src="https://cdn.jsdelivr.net/npm/lucide@latest/dist/umd/lucide.min.js"></script>
@@ -40,6 +65,11 @@
             <button id="btn-pdf" class="btn btn-primary" title="Xuất file PDF">
                 <i data-lucide="download"></i>
                 <span>Export PDF</span>
+            </button>
+            <button id="btn-theme" class="btn" title="Chuyển đổi giao diện Sáng / Tối">
+                <i data-lucide="sun" class="icon-sun"></i>
+                <i data-lucide="moon" class="icon-moon"></i>
+                <span>Theme</span>
             </button>
         </div>
     </header>

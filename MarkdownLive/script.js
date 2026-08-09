@@ -88,7 +88,13 @@ const btnSync = document.getElementById('btn-sync');
 const btnReset = document.getElementById('btn-reset');
 const btnCopy = document.getElementById('btn-copy');
 const btnPdf = document.getElementById('btn-pdf');
+const btnTheme = document.getElementById('btn-theme');
 const toast = document.getElementById('toast');
+
+// Các thẻ <link> có thể hoán đổi phiên bản sáng/tối (được thiết lập ban đầu ở <head>)
+const markdownThemeLink = document.getElementById('theme-markdown-css');
+const hljsThemeLink = document.getElementById('theme-hljs-css');
+const THEME_STORAGE_KEY = 'markdown-live-theme';
 
 // Khởi tạo trạng thái ứng dụng
 let isSyncScrollEnabled = true;
@@ -96,16 +102,80 @@ let activeScrollSource = null;
 let mermaidTimeout = null;
 
 // ==========================================================================
+// CHUYỂN ĐỔI GIAO DIỆN SÁNG / TỐI (Light / Dark Theme)
+// ==========================================================================
+
+// Lấy theme hiện tại đang áp dụng trên thẻ <html> (đã được thiết lập sớm ở <head>)
+function getCurrentTheme() {
+    return document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+}
+
+// Áp dụng theme: cập nhật thuộc tính data-theme, hoán đổi CSS bên ngoài (markdown/hljs)
+// và đồng bộ theme của Mermaid. persist=true khi người dùng chủ động bấm nút chuyển đổi.
+function applyTheme(theme, persist) {
+    document.documentElement.setAttribute('data-theme', theme);
+
+    if (markdownThemeLink) {
+        markdownThemeLink.href = theme === 'dark'
+            ? 'https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.5.1/github-markdown-dark.min.css'
+            : 'https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.5.1/github-markdown-light.min.css';
+    }
+    if (hljsThemeLink) {
+        hljsThemeLink.href = theme === 'dark'
+            ? 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css'
+            : 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css';
+    }
+    if (typeof mermaid !== 'undefined') {
+        mermaid.initialize({ startOnLoad: false, theme: theme === 'dark' ? 'dark' : 'default' });
+    }
+
+    if (persist) {
+        try {
+            localStorage.setItem(THEME_STORAGE_KEY, theme);
+        } catch (e) {
+            // Bỏ qua nếu trình duyệt chặn localStorage (ví dụ chế độ ẩn danh)
+        }
+    }
+}
+
+// Nút Bật/Tắt giao diện Sáng / Tối
+if (btnTheme) {
+    btnTheme.addEventListener('click', () => {
+        const nextTheme = getCurrentTheme() === 'dark' ? 'light' : 'dark';
+        applyTheme(nextTheme, true);
+        // Vẽ lại Preview để cập nhật màu Highlight.js / Mermaid theo theme mới
+        if (typeof renderMarkdown === 'function') renderMarkdown();
+        showToast(nextTheme === 'dark' ? "Đã chuyển sang giao diện Tối" : "Đã chuyển sang giao diện Sáng");
+    });
+}
+
+// Tự động chuyển theme theo hệ thống nếu người dùng chưa từng chọn thủ công
+if (window.matchMedia) {
+    const darkSchemeQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    darkSchemeQuery.addEventListener('change', (event) => {
+        let hasManualPreference = false;
+        try {
+            hasManualPreference = localStorage.getItem(THEME_STORAGE_KEY) !== null;
+        } catch (e) {}
+
+        if (!hasManualPreference) {
+            applyTheme(event.matches ? 'dark' : 'light', false);
+            if (typeof renderMarkdown === 'function') renderMarkdown();
+        }
+    });
+}
+
+// ==========================================================================
 // TÔ MÀU CÚ PHÁP MARKDOWN TRONG EDITOR (Syntax Highlighting cho khung soạn thảo)
 // ==========================================================================
 
 // Bảng màu cho các loại GFM Alert, dùng chung tông màu với phần Preview
 const alertHighlightColors = {
-    NOTE: '#0969da',
-    TIP: '#1a7f37',
-    IMPORTANT: '#8250df',
-    WARNING: '#9a6700',
-    CAUTION: '#d1242f'
+    NOTE: 'var(--alert-note-color)',
+    TIP: 'var(--alert-tip-color)',
+    IMPORTANT: 'var(--alert-important-color)',
+    WARNING: 'var(--alert-warning-color)',
+    CAUTION: 'var(--alert-caution-color)'
 };
 
 // Escape các ký tự HTML đặc biệt để tránh phá vỡ cấu trúc thẻ khi chèn span
@@ -476,8 +546,9 @@ btnPdf.addEventListener('click', () => {
 // Chạy khởi tạo ứng dụng khi trang web tải xong
 window.addEventListener('DOMContentLoaded', () => {
     // Khởi tạo sơ đồ Mermaid (tắt tự động khởi chạy trên tải trang để chạy thủ công qua render)
+    // Theme của Mermaid được đồng bộ theo giao diện Sáng/Tối hiện tại của trang
     if (typeof mermaid !== 'undefined') {
-        mermaid.initialize({ startOnLoad: false, theme: 'default' });
+        mermaid.initialize({ startOnLoad: false, theme: getCurrentTheme() === 'dark' ? 'dark' : 'default' });
     }
 
     // Khởi tạo cấu hình tiện ích toán học cho Marked.js

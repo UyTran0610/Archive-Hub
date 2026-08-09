@@ -5,14 +5,156 @@
     padding: 0;
 }
 
+/* ==========================================================================
+   Theme Tokens (Light mặc định + Dark override qua [data-theme="dark"])
+   ========================================================================== */
+:root {
+    color-scheme: light;
+
+    --bg-body: #f6f8fa;
+    --text-primary: #24292f;
+    --text-secondary: #57606a;
+    --text-muted: #8c959f;
+    --border-color: #d0d7de;
+
+    --header-bg: #1f2328;
+    --header-text: #ffffff;
+    --logo-icon: #4f46e5;
+
+    --btn-bg: #374151;
+    --btn-text: #f3f4f6;
+    --btn-hover-bg: #4b5563;
+    --btn-active-bg: #4f46e5;
+    --btn-active-text: #ffffff;
+    --btn-primary-bg: #2563eb;
+    --btn-primary-hover-bg: #1d4ed8;
+
+    --pane-bg: #ffffff;
+    --pane-header-bg: #f6f8fa;
+    --pane-header-text: #57606a;
+
+    --editor-bg: #fafafa;
+    --editor-caret: #24292f;
+    --editor-placeholder: #9aa4af;
+    --editor-selection: rgba(79, 70, 229, 0.3);
+
+    --toast-bg: #24292f;
+    --toast-text: #ffffff;
+
+    /* Tô màu cú pháp trong Editor */
+    --md-header-marker: #8c959f;
+    --md-header-12: #0969da;
+    --md-header-34: #0550ae;
+    --md-header-56: #1f6feb;
+    --md-bold: #24292f;
+    --md-italic: #24292f;
+    --md-bolditalic: #24292f;
+    --md-strikethrough: #6e7781;
+    --md-code-inline-text: #cf222e;
+    --md-code-inline-bg: rgba(175, 184, 193, 0.2);
+    --md-fence-marker: #8c959f;
+    --md-fence-lang: #8250df;
+    --md-code-block: #57606a;
+    --md-quote-marker: #1a7f37;
+    --md-quote-text: #57606a;
+    --md-list-marker: #9a6700;
+    --md-link-marker: #8c959f;
+    --md-link-text: #0969da;
+    --md-link-url: #1a7f37;
+    --md-hr: #8c959f;
+    --md-table-pipe: #8c959f;
+    --md-math: #8250df;
+
+    /* GFM Alerts / Callouts (Preview) */
+    --alert-note-color: #0969da;
+    --alert-note-bg: rgba(9, 105, 218, 0.05);
+    --alert-tip-color: #1a7f37;
+    --alert-tip-bg: rgba(26, 127, 55, 0.05);
+    --alert-important-color: #8250df;
+    --alert-important-bg: rgba(130, 80, 223, 0.05);
+    --alert-warning-color: #9a6700;
+    --alert-warning-bg: rgba(154, 103, 0, 0.05);
+    --alert-caution-color: #d1242f;
+    --alert-caution-bg: rgba(209, 36, 47, 0.05);
+}
+
+[data-theme="dark"] {
+    color-scheme: dark;
+
+    --bg-body: #0d1117;
+    --text-primary: #c9d1d9;
+    --text-secondary: #8b949e;
+    --text-muted: #6e7681;
+    --border-color: #30363d;
+
+    --header-bg: #161b22;
+    --header-text: #f0f6fc;
+    --logo-icon: #818cf8;
+
+    --btn-bg: #21262d;
+    --btn-text: #e6edf3;
+    --btn-hover-bg: #30363d;
+    --btn-active-bg: #6366f1;
+    --btn-active-text: #ffffff;
+    --btn-primary-bg: #1f6feb;
+    --btn-primary-hover-bg: #388bfd;
+
+    --pane-bg: #0d1117;
+    --pane-header-bg: #161b22;
+    --pane-header-text: #8b949e;
+
+    --editor-bg: #0d1117;
+    --editor-caret: #c9d1d9;
+    --editor-placeholder: #6e7681;
+    --editor-selection: rgba(99, 102, 241, 0.35);
+
+    --toast-bg: #30363d;
+    --toast-text: #f0f6fc;
+
+    --md-header-marker: #8b949e;
+    --md-header-12: #58a6ff;
+    --md-header-34: #79c0ff;
+    --md-header-56: #a5d6ff;
+    --md-bold: #c9d1d9;
+    --md-italic: #c9d1d9;
+    --md-bolditalic: #c9d1d9;
+    --md-strikethrough: #8b949e;
+    --md-code-inline-text: #ff7b72;
+    --md-code-inline-bg: rgba(110, 118, 129, 0.4);
+    --md-fence-marker: #8b949e;
+    --md-fence-lang: #d2a8ff;
+    --md-code-block: #8b949e;
+    --md-quote-marker: #3fb950;
+    --md-quote-text: #8b949e;
+    --md-list-marker: #d29922;
+    --md-link-marker: #8b949e;
+    --md-link-text: #58a6ff;
+    --md-link-url: #3fb950;
+    --md-hr: #8b949e;
+    --md-table-pipe: #8b949e;
+    --md-math: #d2a8ff;
+
+    --alert-note-color: #58a6ff;
+    --alert-note-bg: rgba(56, 139, 253, 0.15);
+    --alert-tip-color: #3fb950;
+    --alert-tip-bg: rgba(63, 185, 80, 0.15);
+    --alert-important-color: #d2a8ff;
+    --alert-important-bg: rgba(163, 113, 247, 0.15);
+    --alert-warning-color: #d29922;
+    --alert-warning-bg: rgba(210, 153, 34, 0.15);
+    --alert-caution-color: #f85149;
+    --alert-caution-bg: rgba(248, 81, 73, 0.15);
+}
+
 body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     height: 100vh;
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    background-color: #f6f8fa;
-    color: #24292f;
+    background-color: var(--bg-body);
+    color: var(--text-primary);
+    transition: background-color 0.2s, color 0.2s;
 }
 
 /* Header & Toolbar */
@@ -21,10 +163,11 @@ body {
     justify-content: space-between;
     align-items: center;
     padding: 10px 20px;
-    background-color: #1f2328;
-    color: #ffffff;
+    background-color: var(--header-bg);
+    color: var(--header-text);
     height: 60px;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    transition: background-color 0.2s;
 }
 
 .logo {
@@ -34,7 +177,7 @@ body {
 }
 
 .logo-icon {
-    color: #4f46e5;
+    color: var(--logo-icon);
 }
 
 .logo h1 {
@@ -52,8 +195,8 @@ body {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    background-color: #374151;
-    color: #f3f4f6;
+    background-color: var(--btn-bg);
+    color: var(--btn-text);
     border: none;
     padding: 8px 12px;
     border-radius: 6px;
@@ -64,26 +207,40 @@ body {
 }
 
 .btn:hover {
-    background-color: #4b5563;
+    background-color: var(--btn-hover-bg);
 }
 
 .btn.active {
-    background-color: #4f46e5;
-    color: #ffffff;
+    background-color: var(--btn-active-bg);
+    color: var(--btn-active-text);
 }
 
 .btn-primary {
-    background-color: #2563eb;
+    background-color: var(--btn-primary-bg);
     color: white;
 }
 
 .btn-primary:hover {
-    background-color: #1d4ed8;
+    background-color: var(--btn-primary-hover-bg);
 }
 
-.btn i {
+.btn i,
+.btn svg {
     width: 16px;
     height: 16px;
+}
+
+/* Nút chuyển đổi giao diện Sáng / Tối */
+#btn-theme .icon-moon {
+    display: none;
+}
+
+[data-theme="dark"] #btn-theme .icon-sun {
+    display: none;
+}
+
+[data-theme="dark"] #btn-theme .icon-moon {
+    display: inline-flex;
 }
 
 /* Workspace Layout */
@@ -100,22 +257,24 @@ body {
     flex-direction: column;
     height: 100%;
     overflow: hidden;
-    background: #ffffff;
+    background: var(--pane-bg);
+    transition: background-color 0.2s;
 }
 
 .editor-pane {
-    border-right: 1px solid #d0d7de;
+    border-right: 1px solid var(--border-color);
 }
 
 .pane-header {
-    background-color: #f6f8fa;
+    background-color: var(--pane-header-bg);
     padding: 8px 16px;
     font-size: 0.75rem;
     font-weight: 600;
-    color: #57606a;
-    border-bottom: 1px solid #d0d7de;
+    color: var(--pane-header-text);
+    border-bottom: 1px solid var(--border-color);
     display: flex;
     justify-content: space-between;
+    transition: background-color 0.2s, color 0.2s, border-color 0.2s;
 }
 
 /* Editor Styling (textarea trong suốt đè lên lớp nền đã tô màu cú pháp) */
@@ -123,7 +282,8 @@ body {
     position: relative;
     flex: 1;
     overflow: hidden;
-    background-color: #fafafa;
+    background-color: var(--editor-bg);
+    transition: background-color 0.2s;
 }
 
 #markdown-input,
@@ -150,18 +310,18 @@ body {
     resize: none;
     outline: none;
     color: transparent;
-    caret-color: #24292f;
+    caret-color: var(--editor-caret);
     background-color: transparent;
     overflow-y: auto;
     scrollbar-gutter: stable;
 }
 
 #markdown-input::placeholder {
-    color: #9aa4af;
+    color: var(--editor-placeholder);
 }
 
 #markdown-input::selection {
-    background-color: rgba(79, 70, 229, 0.3);
+    background-color: var(--editor-selection);
 }
 
 #editor-highlight {
@@ -170,7 +330,7 @@ body {
     scrollbar-gutter: stable;
     pointer-events: none;
     user-select: none;
-    color: #24292f;
+    color: var(--text-primary);
 }
 
 #editor-highlight code {
@@ -187,40 +347,40 @@ body {
 /* ==========================================================================
    Tô màu cú pháp Markdown trong Editor (Syntax Highlighting)
    ========================================================================== */
-.md-header-marker { color: #8c959f; font-weight: 600; }
+.md-header-marker { color: var(--md-header-marker); font-weight: 600; }
 .md-header { font-weight: 700; }
-.md-header-1, .md-header-2 { color: #0969da; }
-.md-header-3, .md-header-4 { color: #0550ae; }
-.md-header-5, .md-header-6 { color: #1f6feb; }
+.md-header-1, .md-header-2 { color: var(--md-header-12); }
+.md-header-3, .md-header-4 { color: var(--md-header-34); }
+.md-header-5, .md-header-6 { color: var(--md-header-56); }
 
-.md-bold { color: #24292f; font-weight: 700; }
-.md-italic { color: #24292f; font-style: italic; }
-.md-bolditalic { color: #24292f; font-weight: 700; font-style: italic; }
-.md-strikethrough { color: #6e7781; text-decoration: line-through; }
+.md-bold { color: var(--md-bold); font-weight: 700; }
+.md-italic { color: var(--md-italic); font-style: italic; }
+.md-bolditalic { color: var(--md-bolditalic); font-weight: 700; font-style: italic; }
+.md-strikethrough { color: var(--md-strikethrough); text-decoration: line-through; }
 
 .md-code-inline {
-    color: #cf222e;
-    background-color: rgba(175, 184, 193, 0.2);
+    color: var(--md-code-inline-text);
+    background-color: var(--md-code-inline-bg);
     border-radius: 3px;
 }
 
-.md-fence-marker { color: #8c959f; font-weight: 600; }
-.md-fence-lang { color: #8250df; font-weight: 600; }
-.md-code-block { color: #57606a; }
+.md-fence-marker { color: var(--md-fence-marker); font-weight: 600; }
+.md-fence-lang { color: var(--md-fence-lang); font-weight: 600; }
+.md-code-block { color: var(--md-code-block); }
 
-.md-quote-marker { color: #1a7f37; font-weight: 700; }
-.md-quote-text { color: #57606a; font-style: italic; }
+.md-quote-marker { color: var(--md-quote-marker); font-weight: 700; }
+.md-quote-text { color: var(--md-quote-text); font-style: italic; }
 .md-alert-tag { font-weight: 700; font-style: normal; }
 
-.md-list-marker { color: #9a6700; font-weight: 700; }
+.md-list-marker { color: var(--md-list-marker); font-weight: 700; }
 
-.md-link-marker { color: #8c959f; }
-.md-link-text { color: #0969da; }
-.md-link-url { color: #1a7f37; text-decoration: underline; }
+.md-link-marker { color: var(--md-link-marker); }
+.md-link-text { color: var(--md-link-text); }
+.md-link-url { color: var(--md-link-url); text-decoration: underline; }
 
-.md-hr { color: #8c959f; font-weight: 700; }
-.md-table-pipe { color: #8c959f; }
-.md-math { color: #8250df; }
+.md-hr { color: var(--md-hr); font-weight: 700; }
+.md-table-pipe { color: var(--md-table-pipe); }
+.md-math { color: var(--md-math); }
 
 /* Preview Styling */
 #preview-output {
@@ -234,13 +394,13 @@ body {
     position: fixed;
     bottom: 20px;
     right: 20px;
-    background-color: #24292f;
-    color: #ffffff;
+    background-color: var(--toast-bg);
+    color: var(--toast-text);
     padding: 10px 20px;
     border-radius: 6px;
     box-shadow: 0 4px 6px rgba(0,0,0,0.1);
     font-size: 0.9rem;
-    transition: opacity 0.3s, transform 0.3s;
+    transition: opacity 0.3s, transform 0.3s, background-color 0.2s, color 0.2s;
     z-index: 1000;
 }
 
@@ -260,7 +420,7 @@ body {
     }
     .editor-pane {
         border-right: none;
-        border-bottom: 1px solid #d0d7de;
+        border-bottom: 1px solid var(--border-color);
         height: 50%;
     }
     .preview-pane {
@@ -268,6 +428,24 @@ body {
     }
     .btn span {
         display: none; /* Chỉ hiện icon trên mobile */
+    }
+
+    /* Thu nhỏ nút trên mobile để chứa được nhiều nút hơn trên toolbar */
+    .app-header {
+        padding: 8px 12px;
+    }
+    .toolbar {
+        gap: 5px;
+    }
+    .btn {
+        padding: 6px 8px;
+        border-radius: 5px;
+        gap: 0;
+    }
+    .btn i,
+    .btn svg {
+        width: 15px;
+        height: 15px;
     }
 }
 
@@ -302,43 +480,43 @@ body {
 
 /* Alert Themes */
 .markdown-alert-note {
-    background-color: rgba(9, 105, 218, 0.05) !important;
-    border-left-color: #0969da !important;
+    background-color: var(--alert-note-bg) !important;
+    border-left-color: var(--alert-note-color) !important;
 }
 .markdown-alert-note .markdown-alert-title {
-    color: #0969da !important;
+    color: var(--alert-note-color) !important;
 }
 
 .markdown-alert-tip {
-    background-color: rgba(26, 127, 55, 0.05) !important;
-    border-left-color: #1a7f37 !important;
+    background-color: var(--alert-tip-bg) !important;
+    border-left-color: var(--alert-tip-color) !important;
 }
 .markdown-alert-tip .markdown-alert-title {
-    color: #1a7f37 !important;
+    color: var(--alert-tip-color) !important;
 }
 
 .markdown-alert-important {
-    background-color: rgba(130, 80, 223, 0.05) !important;
-    border-left-color: #8250df !important;
+    background-color: var(--alert-important-bg) !important;
+    border-left-color: var(--alert-important-color) !important;
 }
 .markdown-alert-important .markdown-alert-title {
-    color: #8250df !important;
+    color: var(--alert-important-color) !important;
 }
 
 .markdown-alert-warning {
-    background-color: rgba(154, 103, 0, 0.05) !important;
-    border-left-color: #9a6700 !important;
+    background-color: var(--alert-warning-bg) !important;
+    border-left-color: var(--alert-warning-color) !important;
 }
 .markdown-alert-warning .markdown-alert-title {
-    color: #9a6700 !important;
+    color: var(--alert-warning-color) !important;
 }
 
 .markdown-alert-caution {
-    background-color: rgba(209, 36, 47, 0.05) !important;
-    border-left-color: #d1242f !important;
+    background-color: var(--alert-caution-bg) !important;
+    border-left-color: var(--alert-caution-color) !important;
 }
 .markdown-alert-caution .markdown-alert-title {
-    color: #d1242f !important;
+    color: var(--alert-caution-color) !important;
 }
 
 /* Canh giữa biểu đồ Mermaid */
