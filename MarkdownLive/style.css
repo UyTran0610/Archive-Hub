@@ -24,10 +24,12 @@
     --btn-bg: #374151;
     --btn-text: #f3f4f6;
     --btn-hover-bg: #4b5563;
+    
+    /* Đồng bộ màu Active và Primary cùng tông màu Indigo */
     --btn-active-bg: #4f46e5;
     --btn-active-text: #ffffff;
-    --btn-primary-bg: #2563eb;
-    --btn-primary-hover-bg: #1d4ed8;
+    --btn-primary-bg: #4f46e5;
+    --btn-primary-hover-bg: #4338ca;
 
     --pane-bg: #ffffff;
     --pane-header-bg: #f6f8fa;
@@ -94,10 +96,12 @@
     --btn-bg: #21262d;
     --btn-text: #e6edf3;
     --btn-hover-bg: #30363d;
+    
+    /* Đồng bộ màu Active và Primary ở chế độ tối */
     --btn-active-bg: #6366f1;
     --btn-active-text: #ffffff;
-    --btn-primary-bg: #1f6feb;
-    --btn-primary-hover-bg: #388bfd;
+    --btn-primary-bg: #6366f1;
+    --btn-primary-hover-bg: #4f46e5;
 
     --pane-bg: #0d1117;
     --pane-header-bg: #161b22;
@@ -216,12 +220,12 @@ body {
 }
 
 .btn-primary {
-    background-color: var(--btn-primary-bg);
-    color: white;
+    background-color: var(--btn-bg);
+    color: var(--btn-text);
 }
 
 .btn-primary:hover {
-    background-color: var(--btn-primary-hover-bg);
+    background-color: var(--btn-hover-bg);
 }
 
 .btn i,
@@ -438,14 +442,14 @@ body {
         gap: 5px;
     }
     .btn {
-        padding: 6px 8px;
+        padding: 10px 12px;
         border-radius: 5px;
         gap: 0;
     }
     .btn i,
     .btn svg {
-        width: 15px;
-        height: 15px;
+        width: 19px;
+        height: 19px;
     }
 }
 
