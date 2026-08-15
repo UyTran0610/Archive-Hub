@@ -28,19 +28,33 @@
     touch-action: none;
   }
 
-  #stage{
-    position:relative;
+  #stage {
+    position: relative;
     aspect-ratio: 400 / 650;
-    width: min(92vw, 400px, calc(92vh * 400 / 650));
-    height: auto;
-    border-radius:20px;
-    overflow:hidden;
+    height: 98vh;
+    height: 98dvh;
+    max-height: none;   
+    width: auto;
+    max-width: 98vw;
+    border-radius: 12px;
+    overflow: hidden;
     box-shadow:
       0 0 0 1px rgba(255,255,255,0.06),
       0 0 40px rgba(120,60,255,0.35),
       0 20px 60px rgba(0,0,0,0.6);
-    background:var(--deep);
-    user-select:none;
+    background: var(--deep);
+    user-select: none;
+  }
+
+  /* Tràn viền tối ưu trên điện thoại */
+  @media (max-width: 500px) {
+    #stage {
+      height: 100dvh;
+      max-height: none;
+      width: 100vw;
+      max-width: none;
+      border-radius: 0;
+    }
   }
 
   canvas{
@@ -195,7 +209,6 @@
   const canvas = document.getElementById('game');
   const ctx = canvas.getContext('2d');
 
-  // logical resolution
   const W = 400, H = 650;
   canvas.width = W;
   canvas.height = H;
@@ -210,7 +223,7 @@
   const retryBtn      = document.getElementById('retryBtn');
   const soundBtn       = document.getElementById('soundBtn');
 
-  // ---------- audio (synthesized, no external files) ----------
+  // ---------- audio ----------
   let audioCtx = null;
   let masterGain = null;
   let muted = false;
@@ -328,14 +341,14 @@
     vy: 0,
     r: 17,
     rot: 0,
-    flapPulse: 0 // spikes to 1 on flap, decays -> drives tentacle curl
+    flapPulse: 0
   };
 
   const GAP = 168;
   const PIPE_W = 66;
   const PIPE_SPEED = 2.6;
   const SPAWN_EVERY = 108;
-  let pipes = []; // {x, gapY, passed}
+  let pipes = [];
 
   // ---------- starfield ----------
   const stars = [];
@@ -358,7 +371,6 @@
     {x:40, y:430,r:14, c1:'#9be8ff', c2:'#2e7fa8', ring:false}
   ];
 
-  // ---------- helpers ----------
   function rand(a,b){ return a+Math.random()*(b-a); }
 
   function resetGame(){
@@ -371,7 +383,7 @@
 
   function spawnPipe(first){
     const margin = 70;
-    const gapY = rand(margin+GAP/2, H-margin-GAP/2-90); // keep above bottom UI safe zone
+    const gapY = rand(margin+GAP/2, H-margin-GAP/2-90);
     pipes.push({ x: first ? W+40 : W+10, gapY, passed:false });
   }
 
@@ -423,7 +435,6 @@
 
   // ---------- drawing ----------
   function drawBackground(){
-    // base gradient
     const g = ctx.createLinearGradient(0,0,0,H);
     g.addColorStop(0,'#120a2e');
     g.addColorStop(0.55,'#1c1044');
@@ -431,7 +442,6 @@
     ctx.fillStyle = g;
     ctx.fillRect(0,0,W,H);
 
-    // nebula blobs
     nebulaBlobs.forEach(n=>{
       const rg = ctx.createRadialGradient(n.x,n.y,0,n.x,n.y,n.r);
       rg.addColorStop(0, n.c);
@@ -442,7 +452,6 @@
       ctx.fill();
     });
 
-    // planets (slow parallax)
     planets.forEach(p=>{
       const px = ((p.x - frame*0.15) % (W+60) + (W+60)) % (W+60) - 30;
       const pg = ctx.createRadialGradient(px-p.r*0.3,p.y-p.r*0.3,1,px,p.y,p.r);
@@ -465,7 +474,6 @@
       ctx.fill();
     });
 
-    // stars
     stars.forEach(s=>{
       s.tw += 0.05;
       const alpha = 0.5 + Math.sin(s.tw)*0.5;
@@ -503,7 +511,6 @@
       ctx.fillRect(p.x, seg.y0, PIPE_W, h);
       ctx.restore();
 
-      // glowing edge line
       ctx.strokeStyle = 'rgba(75,227,255,0.7)';
       ctx.lineWidth = 2;
       ctx.beginPath();
@@ -511,7 +518,6 @@
       ctx.moveTo(p.x+PIPE_W, seg.y0); ctx.lineTo(p.x+PIPE_W, seg.y1);
       ctx.stroke();
 
-      // crystal cap facing the gap
       const capY = seg.dir === 1 ? seg.y1 : seg.y0;
       const capDir = seg.dir;
       ctx.save();
@@ -541,14 +547,12 @@
     ctx.translate(x,y);
     ctx.rotate(octo.rot);
 
-    // glow aura
     const glow = ctx.createRadialGradient(0,0,4,0,0,34);
     glow.addColorStop(0,'rgba(255,150,220,0.55)');
     glow.addColorStop(1,'rgba(255,150,220,0)');
     ctx.fillStyle = glow;
     ctx.beginPath(); ctx.arc(0,0,34,0,Math.PI*2); ctx.fill();
 
-    // tentacles (behind head)
     const nT = 6;
     for(let i=0;i<nT;i++){
       const spread = (i/(nT-1) - 0.5) * 1.9;
@@ -574,7 +578,6 @@
       ctx.fill();
     }
 
-    // head
     const headGrad = ctx.createRadialGradient(-6,-8,2,0,0,20);
     headGrad.addColorStop(0,'#e6b8ff');
     headGrad.addColorStop(0.55,'#b06bf0');
@@ -584,14 +587,12 @@
     ctx.fillStyle = headGrad;
     ctx.fill();
 
-    // little horn/antenna bumps for space-cute vibe
     ctx.beginPath();
     ctx.arc(-9,-13,3,0,Math.PI*2);
     ctx.arc(9,-13,3,0,Math.PI*2);
     ctx.fillStyle = '#b06bf0';
     ctx.fill();
 
-    // eyes
     [-7, 7].forEach(ex=>{
       ctx.beginPath();
       ctx.arc(ex,-2,5.2,0,Math.PI*2);
@@ -608,7 +609,6 @@
       ctx.fill();
     });
 
-    // blush
     ctx.globalAlpha = 0.5;
     ctx.fillStyle = '#ff9fd6';
     ctx.beginPath(); ctx.ellipse(-13,3,3,1.8,0,0,Math.PI*2); ctx.fill();

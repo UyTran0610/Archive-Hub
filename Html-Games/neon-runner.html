@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Neon Runner 3D</title>
+    <title>Neon Runner 3D - Fixed Endless Road</title>
     <style>
         body, html {
             margin: 0;
@@ -25,13 +25,17 @@
             position: absolute;
             top: 20px;
             left: 20px;
-            font-size: 24px;
+            font-size: 22px;
             font-weight: bold;
-            text-shadow: 0 0 10px #00ffff;
-            font-family: monospace;
+            text-shadow: 0 0 12px #00ffff;
+            font-family: 'Courier New', Courier, monospace;
             z-index: 10;
             pointer-events: none;
-            line-height: 1.5;
+            line-height: 1.6;
+            background: rgba(5, 5, 20, 0.45);
+            padding: 10px 18px;
+            border-radius: 8px;
+            border-left: 3px solid #00ffff;
         }
         .screen {
             position: absolute;
@@ -39,25 +43,26 @@
             left: 50%;
             transform: translate(-50%, -50%);
             text-align: center;
-            background: rgba(10, 10, 25, 0.9);
+            background: rgba(8, 8, 24, 0.94);
             padding: 40px;
-            border-radius: 15px;
+            border-radius: 16px;
             z-index: 20;
-            min-width: 280px;
+            min-width: 300px;
+            backdrop-filter: blur(8px);
         }
         #start-screen {
             border: 2px solid #00ffff;
-            box-shadow: 0 0 25px #00ffff;
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.4);
         }
         #game-over-screen {
             display: none;
             border: 2px solid #ff007f;
-            box-shadow: 0 0 25px #ff007f;
+            box-shadow: 0 0 30px rgba(255, 0, 127, 0.4);
         }
         h1 {
             margin-top: 0;
-            font-size: 38px;
-            letter-spacing: 2px;
+            font-size: 40px;
+            letter-spacing: 3px;
             margin-bottom: 20px;
         }
         #start-screen h1 {
@@ -70,42 +75,44 @@
         }
         p {
             font-size: 15px;
-            color: #b0b0d0;
+            color: #b8b8e0;
             line-height: 1.6;
             margin-bottom: 25px;
         }
         button {
             border: none;
-            padding: 12px 35px;
+            padding: 14px 38px;
             font-size: 18px;
             font-weight: bold;
             cursor: pointer;
             border-radius: 8px;
             transition: all 0.2s ease;
             text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: 1.5px;
         }
         #btn-start {
             background: #00ffff;
             color: #050510;
-            box-shadow: 0 0 15px #00ffff;
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.6);
         }
         #btn-start:hover {
             background: #fff;
-            box-shadow: 0 0 25px #fff;
+            box-shadow: 0 0 30px #fff;
+            transform: scale(1.05);
         }
         #btn-restart {
             background: #ff007f;
             color: #fff;
-            box-shadow: 0 0 15px #ff007f;
+            box-shadow: 0 0 20px rgba(255, 0, 127, 0.6);
         }
         #btn-restart:hover {
             background: #fff;
             color: #000;
-            box-shadow: 0 0 25px #fff;
+            box-shadow: 0 0 30px #fff;
+            transform: scale(1.05);
         }
     </style>
-    <!-- Thư viện Three.js -->
+    <!-- Three.js CDN -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 </head>
 <body>
@@ -119,19 +126,19 @@
     <div id="start-screen" class="screen">
         <h1>NEON RUNNER</h1>
         <p>
-            Ăn xu vàng để nhận điểm thưởng lớn!<br>
-            Lên các con dốc để chạy trên nền tảng cao tránh vật cản.<br><br>
-            <strong>Máy tính:</strong> A/D hoặc Mũi tên để di chuyển. Space/W để Nhảy.<br>
+            Thu thập xu vàng và sống sót trên đường chạy siêu tốc!<br>
+            Tận dụng dốc cao để né tránh rào cản bên dưới.<br><br>
+            <strong>Máy tính:</strong> A/D hoặc Mũi tên (Trái/Phải). Space/W (Nhảy).<br>
             <strong>Điện thoại:</strong> Chạm Trái/Phải để chuyển làn, Giữa để Nhảy.
         </p>
-        <button id="btn-start" onclick="initGame()">Bắt đầu</button>
+        <button id="btn-start" onclick="initGame()">Vào Trò Chơi</button>
     </div>
 
     <!-- Màn hình kết thúc -->
     <div id="game-over-screen" class="screen">
         <h1>GAME OVER</h1>
-        <p>Bạn đã va chạm! Điểm số đạt được: <strong id="final-score" style="color: #00ffff; font-size: 20px;">0</strong></p>
-        <button id="btn-restart" onclick="resetGame()">Chơi lại</button>
+        <p>Tốc độ quá nhanh! Tổng điểm của bạn: <br><strong id="final-score" style="color: #00ffff; font-size: 26px; line-height: 2;">0</strong></p>
+        <button id="btn-restart" onclick="resetGame()">Chơi Lại</button>
     </div>
 
     <div id="canvas-container"></div>
@@ -139,52 +146,57 @@
     <script>
         // --- CẤU HÌNH TRÒ CHƠI ---
         const LANES = [-2.5, 0, 2.5];
-        let laneIndex = 1; // Bắt đầu ở làn giữa
+        let laneIndex = 1; 
         let gameRunning = false;
         let score = 0;
         let coinsCollected = 0;
-        let speed = 30; // Tốc độ di chuyển ban đầu (đơn vị/giây)
+        let speed = 30;
         const baseSpeed = 30;
-        const maxSpeed = 70;
+        const maxSpeed = 75;
         
-        // Vật lý nhảy & di chuyển
+        // Vật lý
         let isJumping = false;
         let velocityY = 0;
         const gravity = 0.015;
         const jumpForce = 0.28;
 
-        // Quản lý thời gian spawn vật thể
+        // Quản lý spawn
         let spawnTimer = 0;
-        let spawnInterval = 1.6; // giây spawn chướng ngại vật
-
+        let spawnInterval = 1.6;
         let coinSpawnTimer = 0;
-        let coinSpawnInterval = 0.7; // giây spawn đồng xu ngẫu nhiên
-
+        let coinSpawnInterval = 0.7;
         let structSpawnTimer = 0;
-        let structSpawnInterval = 7.5; // giây spawn dốc & nền tảng
+        let structSpawnInterval = 7.5;
 
-        // Các biến Three.js
+        // Quản lý phân đoạn đường (3-Segment Seamless System)
+        const SEGMENT_LENGTH = 250;
+        const NUM_SEGMENTS = 3;
+        const TOTAL_ROAD_SPAN = SEGMENT_LENGTH * NUM_SEGMENTS; // 750 đơn vị
+        let roadSegments = [];
+
+        // Biến Three.js
         let scene, camera, renderer, clock;
         let player, shadowMesh;
-        let carHoverGroup;       // Nhóm chứa toàn bộ khối xe - cho phép tạo hiệu ứng bồng bềnh độc lập với vật lý
-        let carPulseParts = [];  // Danh sách vật liệu phát sáng cần nhấp nháy (đệm phản trọng lực, lõi động cơ...)
-        let hoverElapsed = 0;    // Thời gian tích lũy dùng cho sóng sin hiệu ứng lơ lửng
-        let gridHelper1, gridHelper2;
+        let carHoverGroup;       
+        let carPulseParts = [];  
+        let beaconLights = [];   
+        let holoMaterials = [];  
+        let hoverElapsed = 0;    
         let buildings = [];
         let obstacles = [];
         let coins = [];
-        let activeStructures = []; // Dốc & Nền tảng hành lang
+        let activeStructures = []; 
         let starParticles;
 
-        // Hình học dùng chung để tối ưu hiệu năng
-        let coinGeom;
-        let coinMat;
+        // Textures & Materials
+        let windowMaterials = [];
+        let holoTextures = [];
+        let coinGeom, coinMat;
 
-        // Âm thanh Web Audio API
+        // Web Audio API
         let audioCtx = null;
         let bgmIntervalId = null;
 
-        // Khởi tạo Audio Context khi người dùng tương tác
         function initAudio() {
             if (!audioCtx) {
                 audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -203,14 +215,11 @@
                 let gain = audioCtx.createGain();
                 osc.connect(gain);
                 gain.connect(audioCtx.destination);
-                
                 osc.type = 'triangle';
-                osc.frequency.setValueAtTime(150, audioCtx.currentTime);
-                osc.frequency.exponentialRampToValueAtTime(700, audioCtx.currentTime + 0.15);
-                
+                osc.frequency.setValueAtTime(160, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(750, audioCtx.currentTime + 0.15);
                 gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
                 gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
-                
                 osc.start();
                 osc.stop(audioCtx.currentTime + 0.15);
             } catch(e) {}
@@ -223,14 +232,11 @@
                 let gain = audioCtx.createGain();
                 osc.connect(gain);
                 gain.connect(audioCtx.destination);
-                
                 osc.type = 'sawtooth';
                 osc.frequency.setValueAtTime(180, audioCtx.currentTime);
                 osc.frequency.linearRampToValueAtTime(30, audioCtx.currentTime + 0.6);
-                
                 gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
                 gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.6);
-                
                 osc.start();
                 osc.stop(audioCtx.currentTime + 0.6);
             } catch(e) {}
@@ -244,27 +250,20 @@
                 let gain = audioCtx.createGain();
                 osc.connect(gain);
                 gain.connect(audioCtx.destination);
-                
                 osc.type = 'sine';
-                
-                // Hiệu ứng "double-ding" cổ điển của game thùng
-                osc.frequency.setValueAtTime(987.77, now); // nốt B5
-                osc.frequency.setValueAtTime(1318.51, now + 0.08); // nốt E6
-                
+                osc.frequency.setValueAtTime(987.77, now);
+                osc.frequency.setValueAtTime(1318.51, now + 0.08);
                 gain.gain.setValueAtTime(0.08, now);
                 gain.gain.linearRampToValueAtTime(0.001, now + 0.35);
-                
                 osc.start(now);
                 osc.stop(now + 0.35);
             } catch(e) {}
         }
 
-        // Nhạc nền đơn giản lặp lại phong cách Synthwave
         function startBGM() {
             if (!audioCtx) return;
             let step = 0;
-            const notes = [55, 55, 65.4, 65.4, 73.4, 73.4, 82.4, 82.4]; // Tần số nốt bass trầm (Hz)
-            
+            const notes = [55, 55, 65.4, 65.4, 73.4, 73.4, 82.4, 82.4];
             function scheduleNextBeat() {
                 if (!gameRunning) return;
                 try {
@@ -272,180 +271,361 @@
                     let gain = audioCtx.createGain();
                     osc.connect(gain);
                     gain.connect(audioCtx.destination);
-                    
                     osc.type = 'sawtooth';
                     osc.frequency.setValueAtTime(notes[step % notes.length], audioCtx.currentTime);
-                    
-                    gain.gain.setValueAtTime(0.04, audioCtx.currentTime);
+                    gain.gain.setValueAtTime(0.035, audioCtx.currentTime);
                     gain.gain.linearRampToValueAtTime(0.001, audioCtx.currentTime + 0.25);
-                    
                     osc.start();
                     osc.stop(audioCtx.currentTime + 0.3);
                     step++;
                 } catch(e) {}
             }
-            
             bgmIntervalId = setInterval(scheduleNextBeat, 350);
         }
 
-        // --- KHỞI TẠO ĐỒ HỌA THREE.JS ---
+        // --- CÁC HÀM TẠO TEXTURE PROCEDURAL CANVAS ---
+        function createSynthwaveSunTexture() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 256;
+            canvas.height = 256;
+            const ctx = canvas.getContext('2d');
+            
+            const grad = ctx.createLinearGradient(0, 0, 0, 256);
+            grad.addColorStop(0, '#fffb77');
+            grad.addColorStop(0.35, '#ff007f');
+            grad.addColorStop(1, '#660099');
+            
+            ctx.fillStyle = grad;
+            ctx.beginPath();
+            ctx.arc(128, 128, 124, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = '#050510';
+            for (let y = 120; y < 240; y += 12) {
+                const h = 2 + (y - 120) * 0.07;
+                ctx.fillRect(0, y, 256, h);
+            }
+
+            return new THREE.CanvasTexture(canvas);
+        }
+
+        function createBuildingTexture(neonTheme) {
+            const canvas = document.createElement('canvas');
+            canvas.width = 128;
+            canvas.height = 256;
+            const ctx = canvas.getContext('2d');
+
+            ctx.fillStyle = '#080816';
+            ctx.fillRect(0, 0, 128, 256);
+
+            const colors = [neonTheme, '#00ffff', '#ffd700', '#ffffff', '#222244'];
+            for (let y = 8; y < 248; y += 12) {
+                for (let x = 6; x < 122; x += 10) {
+                    if (Math.random() > 0.35) {
+                        ctx.fillStyle = colors[Math.floor(Math.random() * colors.length)];
+                        ctx.globalAlpha = Math.random() > 0.25 ? (0.4 + Math.random() * 0.6) : 0.08;
+                        ctx.fillRect(x, y, 6, 7);
+                    }
+                }
+            }
+            const tex = new THREE.CanvasTexture(canvas);
+            tex.wrapS = THREE.RepeatWrapping;
+            tex.wrapT = THREE.RepeatWrapping;
+            return tex;
+        }
+
+        function createHoloTexture(text, color) {
+            const canvas = document.createElement('canvas');
+            canvas.width = 256;
+            canvas.height = 96;
+            const ctx = canvas.getContext('2d');
+
+            ctx.fillStyle = 'rgba(5, 5, 20, 0.75)';
+            ctx.fillRect(0, 0, 256, 96);
+
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 4;
+            ctx.strokeRect(4, 4, 248, 88);
+
+            ctx.font = 'bold 36px "Courier New", monospace';
+            ctx.fillStyle = color;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.shadowColor = color;
+            ctx.shadowBlur = 10;
+            ctx.fillText(text, 128, 48);
+
+            return new THREE.CanvasTexture(canvas);
+        }
+
+        // --- KHỞI TẠO THREE.JS ---
         function setupThreeJS() {
             const container = document.getElementById('canvas-container');
             
-            // Scene & Fog
             scene = new THREE.Scene();
-            scene.fog = new THREE.FogExp2(0x050510, 0.012);
+            scene.fog = new THREE.FogExp2(0x060515, 0.009);
 
-            // Camera
             camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
             camera.position.set(0, 3.8, 6.5);
             camera.lookAt(0, 1.2, -5);
 
-            // Renderer
-            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
             renderer.setSize(window.innerWidth, window.innerHeight);
-            renderer.setPixelRatio(window.devicePixelRatio);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
             container.appendChild(renderer.domElement);
 
             clock = new THREE.Clock();
 
-            // Khởi tạo hình học dùng chung cho Đồng xu
+            windowMaterials = [
+                new THREE.MeshStandardMaterial({ map: createBuildingTexture('#00ffff'), roughness: 0.3, metalness: 0.8 }),
+                new THREE.MeshStandardMaterial({ map: createBuildingTexture('#ff007f'), roughness: 0.3, metalness: 0.8 }),
+                new THREE.MeshStandardMaterial({ map: createBuildingTexture('#9900ff'), roughness: 0.3, metalness: 0.8 })
+            ];
+
+            const holoWords = ['NEON', 'CYBER', '2088', 'TOKYO', 'SYNTH', 'RUNNER'];
+            const holoColors = ['#00ffff', '#ff007f', '#00ff66', '#ffd700'];
+            holoWords.forEach((word, i) => {
+                holoTextures.push(createHoloTexture(word, holoColors[i % holoColors.length]));
+            });
+
             coinGeom = new THREE.CylinderGeometry(0.4, 0.4, 0.15, 12);
-            coinGeom.rotateX(Math.PI / 2); // Xoay dựng đứng đồng xu hướng về camera
+            coinGeom.rotateX(Math.PI / 2);
             coinMat = new THREE.MeshStandardMaterial({
                 color: 0xffd700,
-                emissive: 0xffd700,
-                emissiveIntensity: 1.5,
+                emissive: 0xffaa00,
+                emissiveIntensity: 1.6,
                 metalness: 1.0,
                 roughness: 0.1
             });
 
-            // Ánh sáng
-            const ambientLight = new THREE.AmbientLight(0x08081a);
+            const ambientLight = new THREE.AmbientLight(0x0f0c29, 1.2);
             scene.add(ambientLight);
 
-            const dirLight = new THREE.DirectionalLight(0xff00ff, 0.8);
-            dirLight.position.set(5, 15, 5);
+            const dirLight = new THREE.DirectionalLight(0xff00aa, 1.0);
+            dirLight.position.set(0, 20, -10);
             scene.add(dirLight);
 
-            const pointLight = new THREE.PointLight(0x00ffff, 1.5, 30);
-            pointLight.position.set(0, 3, -10);
+            const pointLight = new THREE.PointLight(0x00ffff, 2.0, 40);
+            pointLight.position.set(0, 4, -5);
             scene.add(pointLight);
 
-            // Tạo các phần tử môi trường
             createEnvironment();
             createPlayer();
         }
 
-        function createEnvironment() {
-            // Đường chạy dạng lưới phản quang (2 lưới nối tiếp để cuộn vô tận)
-            gridHelper1 = new THREE.GridHelper(300, 60, 0x00ffff, 0x440044);
-            gridHelper1.position.set(0, -0.02, 0);
-            scene.add(gridHelper1);
+        // Tạo một phân đoạn đường hoàn chỉnh (Road Segment)
+        function createRoadSegment(zOffset) {
+            const segGroup = new THREE.Group();
 
-            gridHelper2 = new THREE.GridHelper(300, 60, 0x00ffff, 0x440044);
-            gridHelper2.position.set(0, -0.02, -300);
-            scene.add(gridHelper2);
+            // 1. Mặt đường nhựa tối bên dưới (chặn không cho thấy hư vô)
+            const asphaltGeom = new THREE.PlaneGeometry(8.6, SEGMENT_LENGTH);
+            const asphaltMat = new THREE.MeshBasicMaterial({ color: 0x03030c });
+            const asphalt = new THREE.Mesh(asphaltGeom, asphaltMat);
+            asphalt.rotation.x = -Math.PI / 2;
+            asphalt.position.y = -0.03;
+            segGroup.add(asphalt);
 
-            // Mặt trời Synthwave khổng lồ ở phía xa
-            const sunGeom = new THREE.SphereGeometry(35, 32, 16);
-            const sunMat = new THREE.MeshBasicMaterial({
-                color: 0xff007f,
-                transparent: true,
-                opacity: 0.85
+            // 2. Lưới dạ quang (Grid)
+            const grid = new THREE.GridHelper(SEGMENT_LENGTH, 50, 0x00ffff, 0x330055);
+            grid.position.y = -0.02;
+            // Co giãn trục X của lưới vừa khít làn đường 8.6m
+            grid.scale.set(8.6 / SEGMENT_LENGTH, 1, 1);
+            segGroup.add(grid);
+
+            // 3. Thanh Neon Guardrail biên đường Trái (Xanh lam) & Phải (Hồng tím)
+            const railGeom = new THREE.BoxGeometry(0.12, 0.25, SEGMENT_LENGTH);
+            
+            const leftRailMat = new THREE.MeshBasicMaterial({ color: 0x00ffff });
+            const leftRail = new THREE.Mesh(railGeom, leftRailMat);
+            leftRail.position.set(-4.3, 0.1, 0);
+            segGroup.add(leftRail);
+
+            const rightRailMat = new THREE.MeshBasicMaterial({ color: 0xff007f });
+            const rightRail = new THREE.Mesh(railGeom, rightRailMat);
+            rightRail.position.set(4.3, 0.1, 0);
+            segGroup.add(rightRail);
+
+            // 4. Vạch kẻ phân làn neon
+            const laneDivGeom = new THREE.BoxGeometry(0.04, 0.02, SEGMENT_LENGTH);
+            const laneDivMat = new THREE.MeshBasicMaterial({ color: 0x00ffff, transparent: true, opacity: 0.4 });
+            [-1.25, 1.25].forEach(lx => {
+                const laneLine = new THREE.Mesh(laneDivGeom, laneDivMat);
+                laneLine.position.set(lx, 0.01, 0);
+                segGroup.add(laneLine);
             });
-            const sun = new THREE.Mesh(sunGeom, sunMat);
-            sun.position.set(0, 5, -280);
-            scene.add(sun);
 
-            // Tạo các tòa nhà hai bên đường
-            for (let i = 0; i < 30; i++) {
+            segGroup.position.z = zOffset;
+            scene.add(segGroup);
+            return segGroup;
+        }
+
+        function createEnvironment() {
+            // Khởi tạo 3 phân đoạn đường nối tiếp nhau: 0, -250, -500
+            for (let i = 0; i < NUM_SEGMENTS; i++) {
+                const seg = createRoadSegment(-i * SEGMENT_LENGTH);
+                roadSegments.push(seg);
+            }
+
+            // Mặt trời Synthwave Scanlines
+            const sunTex = createSynthwaveSunTexture();
+            const sunGeom = new THREE.PlaneGeometry(65, 65);
+            const sunMat = new THREE.MeshBasicMaterial({ map: sunTex, transparent: true, depthWrite: false });
+            const sunMesh = new THREE.Mesh(sunGeom, sunMat);
+            sunMesh.position.set(0, 18, -280);
+            scene.add(sunMesh);
+
+            const glowGeom = new THREE.PlaneGeometry(100, 100);
+            const glowMat = new THREE.MeshBasicMaterial({
+                color: 0xff007f, transparent: true, opacity: 0.18, blending: THREE.AdditiveBlending, depthWrite: false
+            });
+            const glowMesh = new THREE.Mesh(glowGeom, glowMat);
+            glowMesh.position.set(0, 18, -285);
+            scene.add(glowMesh);
+
+            createHorizonMountains();
+
+            for (let i = 0; i < 28; i++) {
                 spawnBuilding(i);
             }
 
-            // Bụi không gian (Hạt chuyển động nhanh tạo cảm giác tốc độ)
-            const starCount = 180;
+            // Bụi sao không gian
+            const starCount = 220;
             const starGeometry = new THREE.BufferGeometry();
             const starPositions = new Float32Array(starCount * 3);
             for (let i = 0; i < starCount * 3; i += 3) {
-                starPositions[i] = (Math.random() - 0.5) * 120;
-                starPositions[i+1] = Math.random() * 45;
+                starPositions[i] = (Math.random() - 0.5) * 140;
+                starPositions[i+1] = Math.random() * 50;
                 starPositions[i+2] = -Math.random() * 300;
             }
             starGeometry.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
             const starMaterial = new THREE.PointsMaterial({
-                color: 0xffffff,
-                size: 0.25,
-                transparent: true,
-                opacity: 0.8
+                color: 0x00ffff, size: 0.28, transparent: true, opacity: 0.85
             });
             starParticles = new THREE.Points(starGeometry, starMaterial);
             scene.add(starParticles);
         }
 
-        function spawnBuilding(index) {
-            const h = 12 + Math.random() * 25;
-            const w = 6 + Math.random() * 8;
-            const d = 6 + Math.random() * 8;
-            const geom = new THREE.BoxGeometry(w, h, d);
+        function createHorizonMountains() {
+            const mGeom = new THREE.PlaneGeometry(360, 45, 24, 4);
+            const pos = mGeom.attributes.position;
             
-            const neonColors = [0xff00ff, 0x00ffff, 0x9900ff];
-            const neonColor = neonColors[Math.floor(Math.random() * neonColors.length)];
+            for (let i = 0; i < pos.count; i++) {
+                const y = pos.getY(i);
+                if (y > 0) {
+                    const noise = Math.sin(i * 1.5) * 8 + Math.cos(i * 3.2) * 5;
+                    pos.setY(i, y + noise);
+                }
+            }
+            mGeom.computeVertexNormals();
 
-            const mat = new THREE.MeshStandardMaterial({
-                color: 0x070715,
-                roughness: 0.7,
-                emissive: neonColor,
-                emissiveIntensity: 0.12
+            const mMat = new THREE.MeshBasicMaterial({ color: 0x0a0520 });
+            const mountainMesh = new THREE.Mesh(mGeom, mMat);
+            mountainMesh.position.set(0, 10, -270);
+            scene.add(mountainMesh);
+
+            const mWireMat = new THREE.MeshBasicMaterial({
+                color: 0x440077, wireframe: true, transparent: true, opacity: 0.4
             });
-            const mesh = new THREE.Mesh(geom, mat);
+            const mountainWire = new THREE.Mesh(mGeom, mWireMat);
+            mountainWire.position.set(0, 10.1, -269.8);
+            scene.add(mountainWire);
+        }
 
-            // Tạo khung viền neon phát sáng cho tòa nhà
+        function spawnBuilding(index) {
+            const bGroup = new THREE.Group();
+
+            const h = 14 + Math.random() * 28;
+            const w = 7 + Math.random() * 6;
+            const d = 8 + Math.random() * 8;
+            
+            const matIndex = Math.floor(Math.random() * windowMaterials.length);
+            const mainMat = windowMaterials[matIndex];
+            const neonColors = [0x00ffff, 0xff007f, 0x9900ff, 0x00ffaa];
+            const neonColor = neonColors[matIndex % neonColors.length];
+
+            const geom = new THREE.BoxGeometry(w, h, d);
+            const mainBuilding = new THREE.Mesh(geom, mainMat);
+            mainBuilding.position.y = h / 2 - 0.5;
+            bGroup.add(mainBuilding);
+
             const edges = new THREE.EdgesGeometry(geom);
-            const lineMat = new THREE.LineBasicMaterial({ color: neonColor, linewidth: 2 });
-            const wireframe = new THREE.LineSegments(edges, lineMat);
-            mesh.add(wireframe);
+            const line = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({ color: neonColor, linewidth: 1 }));
+            mainBuilding.add(line);
 
-            // Đặt ngẫu nhiên bên trái hoặc phải đường
+            const roofType = Math.random();
+            if (roofType > 0.6) {
+                const antHeight = 4 + Math.random() * 5;
+                const antGeom = new THREE.CylinderGeometry(0.08, 0.15, antHeight, 6);
+                const antMat = new THREE.MeshBasicMaterial({ color: 0x8888aa });
+                const antenna = new THREE.Mesh(antGeom, antMat);
+                antenna.position.set(0, h + antHeight / 2 - 0.5, 0);
+                bGroup.add(antenna);
+
+                const beaconGeom = new THREE.SphereGeometry(0.35, 8, 8);
+                const beaconMat = new THREE.MeshBasicMaterial({ color: 0xff0044 });
+                const beacon = new THREE.Mesh(beaconGeom, beaconMat);
+                beacon.position.set(0, h + antHeight - 0.5, 0);
+                bGroup.add(beacon);
+
+                beaconLights.push({ mat: beaconMat, speed: 4 + Math.random() * 4, offset: Math.random() * Math.PI });
+            } else if (roofType > 0.25) {
+                const holoTex = holoTextures[Math.floor(Math.random() * holoTextures.length)];
+                const holoGeom = new THREE.PlaneGeometry(5.5, 2.2);
+                const holoMat = new THREE.MeshBasicMaterial({
+                    map: holoTex, transparent: true, opacity: 0.85, side: THREE.DoubleSide
+                });
+                const holoMesh = new THREE.Mesh(holoGeom, holoMat);
+                holoMesh.position.set(0, h + 1.2, 0);
+                holoMesh.rotation.y = (Math.random() - 0.5) * 0.4;
+                bGroup.add(holoMesh);
+
+                holoMaterials.push(holoMat);
+            } else {
+                const subW = w * 0.6;
+                const subH = 3 + Math.random() * 4;
+                const subD = d * 0.6;
+                const subGeom = new THREE.BoxGeometry(subW, subH, subD);
+                const subMesh = new THREE.Mesh(subGeom, mainMat);
+                subMesh.position.set(0, h + subH / 2 - 0.5, 0);
+                
+                const subEdges = new THREE.EdgesGeometry(subGeom);
+                subMesh.add(new THREE.LineSegments(subEdges, new THREE.LineBasicMaterial({ color: 0xffffff })));
+                bGroup.add(subMesh);
+            }
+
             const side = Math.random() > 0.5 ? 1 : -1;
-            mesh.position.x = side * (14 + Math.random() * 20);
-            mesh.position.y = h / 2 - 0.5;
-            mesh.position.z = -10 - (index * 12);
+            bGroup.position.x = side * (13 + Math.random() * 16);
+            bGroup.position.z = -10 - (index * 11);
 
-            scene.add(mesh);
-            buildings.push(mesh);
+            scene.add(bGroup);
+            buildings.push(bGroup);
         }
 
         function createPlayer() {
-            // "player" là gốc điều khiển vật lý (vị trí/va chạm) - giữ nguyên để không phá vỡ code cũ
             player = new THREE.Group();
             player.position.set(LANES[laneIndex], 0.3, 0);
             scene.add(player);
 
-            // "carHoverGroup" chứa toàn bộ mô hình xe - dùng để tạo hiệu ứng bồng bềnh (bobbing)
-            // độc lập với vị trí vật lý thật của player, không ảnh hưởng va chạm/nhảy.
             carHoverGroup = new THREE.Group();
             player.add(carHoverGroup);
 
-            // --- VẬT LIỆU DÙNG CHUNG ---
             const hullMat = new THREE.MeshStandardMaterial({
-                color: 0x0a1830, emissive: 0x00ffff, emissiveIntensity: 0.35,
-                metalness: 0.9, roughness: 0.25
+                color: 0x091428, emissive: 0x00ffff, emissiveIntensity: 0.3,
+                metalness: 0.9, roughness: 0.2
             });
             const canopyMat = new THREE.MeshPhysicalMaterial({
-                color: 0x113355, emissive: 0x00ffff, emissiveIntensity: 0.5,
-                metalness: 0.1, roughness: 0.05, transparent: true, opacity: 0.55
+                color: 0x113355, emissive: 0x00ffff, emissiveIntensity: 0.6,
+                metalness: 0.1, roughness: 0.05, transparent: true, opacity: 0.6
             });
             const cyanGlowMat = new THREE.MeshStandardMaterial({
-                color: 0x00ffff, emissive: 0x00ffff, emissiveIntensity: 1.8,
-                metalness: 0.3, roughness: 0.15
+                color: 0x00ffff, emissive: 0x00ffff, emissiveIntensity: 2.0
             });
             const coreGlowMat = new THREE.MeshBasicMaterial({
                 color: 0xffe0ff, transparent: true, opacity: 0.9,
                 blending: THREE.AdditiveBlending, depthWrite: false
             });
             const flameMat = new THREE.MeshBasicMaterial({
-                color: 0xff2f9f, transparent: true, opacity: 0.55,
+                color: 0xff007f, transparent: true, opacity: 0.6,
                 blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide
             });
             const fieldGlowMat = new THREE.MeshBasicMaterial({
@@ -459,36 +639,31 @@
                 mesh.add(line);
             }
 
-            // --- 1. THÂN XE CHÍNH (khí động học, thấp và dẹt) ---
             const chassisGeom = new THREE.BoxGeometry(1.05, 0.24, 1.4);
             const chassis = new THREE.Mesh(chassisGeom, hullMat);
             chassis.position.set(0, -0.03, 0.05);
             addEdgeGlow(chassis, chassisGeom, 0x00ffff);
             carHoverGroup.add(chassis);
 
-            // --- 2. MŨI XE THUÔN NHỌN (mô phỏng khối khí động lực phía trước) ---
             const noseGeom = new THREE.ConeGeometry(0.5, 0.65, 4);
             const nose = new THREE.Mesh(noseGeom, hullMat);
-            nose.rotation.x = -Math.PI / 2;  // Mũi nhọn hướng về phía trước (-Z)
-            nose.rotation.y = Math.PI / 4;   // Xoay 45° để cạnh phẳng nằm ngang/dọc thay vì góc cạnh
-            nose.scale.set(1, 1, 0.42);      // Làm dẹt xuống cho giống nêm khí động học
+            nose.rotation.x = -Math.PI / 2;
+            nose.rotation.y = Math.PI / 4;
+            nose.scale.set(1, 1, 0.42);
             nose.position.set(0, -0.03, -0.95);
             carHoverGroup.add(nose);
 
-            // Dải đèn pha phát sáng ở mũi xe
             const headlightGeom = new THREE.BoxGeometry(0.55, 0.05, 0.05);
             const headlight = new THREE.Mesh(headlightGeom, cyanGlowMat);
             headlight.position.set(0, -0.05, -1.28);
             carHoverGroup.add(headlight);
 
-            // --- 3. KÍNH LÁI/BUỒNG LÁI HÌNH VÒM (kính cong trong suốt) ---
             const canopyGeom = new THREE.SphereGeometry(0.4, 16, 10, 0, Math.PI * 2, 0, Math.PI / 2);
             const canopy = new THREE.Mesh(canopyGeom, canopyMat);
             canopy.scale.set(1, 0.6, 1.3);
             canopy.position.set(0, 0.11, 0.1);
             carHoverGroup.add(canopy);
 
-            // --- 4. CÁNH ĐUÔI (spoiler) trên hai trụ đỡ ---
             const spoilerGeom = new THREE.BoxGeometry(1.2, 0.05, 0.22);
             const spoiler = new THREE.Mesh(spoilerGeom, hullMat);
             spoiler.position.set(0, 0.32, 0.68);
@@ -502,23 +677,11 @@
                 carHoverGroup.add(strut);
             });
 
-            // --- 5. VÂY HÔNG (side fins) tạo dáng thể thao ---
-            const finGeom = new THREE.BoxGeometry(0.1, 0.16, 1.15);
-            [-0.56, 0.56].forEach(sx => {
-                const fin = new THREE.Mesh(finGeom, hullMat);
-                fin.position.set(sx, -0.06, 0.05);
-                fin.rotation.z = sx > 0 ? -0.05 : 0.05;
-                addEdgeGlow(fin, finGeom, 0x00ffff);
-                carHoverGroup.add(fin);
-            });
-
-            // --- 6. ĐỆM PHẢN TRỌNG LỰC (thay thế hoàn toàn cho bánh xe) ---
-            // 4 đệm năng lượng ở 4 góc gầm xe, phát sáng và có vòng năng lượng bao quanh
             const podGeom = new THREE.CylinderGeometry(0.2, 0.24, 0.06, 16);
             const ringGeom = new THREE.TorusGeometry(0.22, 0.03, 6, 16);
             const podPositions = [
-                [-0.42, -0.55], [0.42, -0.55], // Cặp trước
-                [-0.42, 0.55], [0.42, 0.55]    // Cặp sau
+                [-0.42, -0.55], [0.42, -0.55],
+                [-0.42, 0.55], [0.42, 0.55]
             ];
             podPositions.forEach(([px, pz]) => {
                 const pod = new THREE.Mesh(podGeom, cyanGlowMat);
@@ -531,14 +694,12 @@
                 carHoverGroup.add(ring);
             });
 
-            // Vầng sáng lơ lửng lớn bên dưới toàn bộ gầm xe - biểu thị trường phản trọng lực
             const fieldGeom = new THREE.CircleGeometry(0.72, 24);
             const fieldGlow = new THREE.Mesh(fieldGeom, fieldGlowMat);
             fieldGlow.rotation.x = -Math.PI / 2;
             fieldGlow.position.set(0, -0.29, 0.05);
             carHoverGroup.add(fieldGlow);
 
-            // --- 7. ĐỘNG CƠ PHẢN LỰC PHÍA SAU (ống xả + lõi phát sáng + tia lửa) ---
             const nozzleGeom = new THREE.CylinderGeometry(0.16, 0.19, 0.3, 12);
             const coreGeom = new THREE.CircleGeometry(0.13, 12);
             const flameGeom = new THREE.ConeGeometry(0.13, 0.45, 8);
@@ -553,25 +714,19 @@
                 carHoverGroup.add(core);
 
                 const flame = new THREE.Mesh(flameGeom, flameMat);
-                flame.rotation.x = Math.PI / 2; // Đuôi lửa hướng ra sau (+Z)
+                flame.rotation.x = Math.PI / 2;
                 flame.position.set(nx, -0.02, 1.05);
                 carHoverGroup.add(flame);
 
-                carPulseParts.push({ mat: flameMat, prop: 'opacity', base: 0.5, amp: 0.25, speed: 9, phase: nx * 5 });
+                carPulseParts.push({ mat: flameMat, prop: 'opacity', base: 0.5, amp: 0.25, speed: 10, phase: nx * 4 });
             });
 
-            // Đăng ký các vật liệu phát sáng để nhấp nháy theo thời gian (hiệu ứng năng lượng sống động)
-            carPulseParts.push({ mat: cyanGlowMat, prop: 'emissiveIntensity', base: 1.6, amp: 0.6, speed: 4.2, phase: 0 });
-            carPulseParts.push({ mat: coreGlowMat, prop: 'opacity', base: 0.75, amp: 0.2, speed: 6.5, phase: 1.1 });
+            carPulseParts.push({ mat: cyanGlowMat, prop: 'emissiveIntensity', base: 1.8, amp: 0.6, speed: 4.5, phase: 0 });
             carPulseParts.push({ mat: fieldGlowMat, prop: 'opacity', base: 0.22, amp: 0.1, speed: 3, phase: 0.5 });
 
-            // Đổ bóng giả dưới sàn (giúp xác định độ cao khi nhảy)
             const shadowGeom = new THREE.PlaneGeometry(1.3, 2.2);
             const shadowMat = new THREE.MeshBasicMaterial({
-                color: 0x000000,
-                transparent: true,
-                opacity: 0.6,
-                depthWrite: false
+                color: 0x000000, transparent: true, opacity: 0.6, depthWrite: false
             });
             shadowMesh = new THREE.Mesh(shadowGeom, shadowMat);
             shadowMesh.rotation.x = -Math.PI / 2;
@@ -579,48 +734,34 @@
             scene.add(shadowMesh);
         }
 
-        // --- CƠ CHẾ TẠO VẬT THỂ & ĐỒNG XU ---
-        
+        // --- CƠ CHẾ VẬT THỂ & DỐC ---
         function isZoneBlocked(lane) {
-            // Nếu làn đường này đang có bất kỳ dốc hoặc nền tảng cao nào đang hoạt động,
-            // ta chặn hoàn toàn việc spawn chướng ngại vật để tránh vật cản chui vào trong platform [2].
             for (let struct of activeStructures) {
-                if (struct.lane === lane) {
-                    return true;
-                }
+                if (struct.lane === lane) return true;
             }
             return false;
         }
 
         function spawnObstacle() {
             const lane = LANES[Math.floor(Math.random() * LANES.length)];
-            
-            // Chặn hoàn toàn spawn chướng ngại vật ở làn có dốc/nền tảng [2]
             if (isZoneBlocked(lane)) return;
 
-            const isTall = Math.random() > 0.45; // 45% cơ hội ra vật cản cao không nhảy qua được
-            
+            const isTall = Math.random() > 0.45;
             let geom, mat, yPos, height, width;
             if (isTall) {
-                // Rào cản cao - Bắt buộc phải lách sang làn khác để tránh
                 width = 1.4;
                 height = 2.4;
                 geom = new THREE.BoxGeometry(width, height, 0.8);
                 mat = new THREE.MeshStandardMaterial({
-                    color: 0xff3300,
-                    emissive: 0xff3300,
-                    emissiveIntensity: 1.6
+                    color: 0xff0044, emissive: 0xff0044, emissiveIntensity: 1.8
                 });
                 yPos = height / 2;
             } else {
-                // Rào cản thấp - Có thể nhảy qua được
                 width = 1.8;
                 height = 0.6;
                 geom = new THREE.BoxGeometry(width, height, 0.8);
                 mat = new THREE.MeshStandardMaterial({
-                    color: 0xffaa00,
-                    emissive: 0xffaa00,
-                    emissiveIntensity: 1.6
+                    color: 0xffaa00, emissive: 0xffaa00, emissiveIntensity: 1.8
                 });
                 yPos = height / 2;
             }
@@ -628,13 +769,10 @@
             const mesh = new THREE.Mesh(geom, mat);
             mesh.position.set(lane, yPos, -200);
 
-            // Viền phát sáng cho vật cản
             const edges = new THREE.EdgesGeometry(geom);
-            const line = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({ color: 0xffffff, linewidth: 2 }));
-            mesh.add(line);
+            mesh.add(new THREE.LineSegments(edges, new THREE.LineBasicMaterial({ color: 0xffffff, linewidth: 2 })));
 
             mesh.userData = { isTall, width, height, depth: 0.8 };
-
             scene.add(mesh);
             obstacles.push(mesh);
         }
@@ -650,284 +788,200 @@
         function spawnRandomCoin() {
             const lane = LANES[Math.floor(Math.random() * LANES.length)];
             const zStart = -180;
-
-            // Không spawn xu dưới đất đè lên dốc/hành lang
             if (isZoneBlocked(lane)) return;
 
-            // 70% ở mặt đất (y=0.6), 30% ở trên không cần nhảy (y=1.8)
             const isHigh = Math.random() > 0.7;
-            const y = isHigh ? 1.8 : 0.6;
-            spawnCoin(lane, y, zStart);
+            spawnCoin(lane, isHigh ? 1.8 : 0.6, zStart);
         }
 
-        // --- CƠ CHẾ TẠO DỐC & HÀNH LANG (RAMP & PLATFORM) ---
         function spawnStructure() {
             const lane = LANES[Math.floor(Math.random() * LANES.length)];
             const zStart = -200;
-            const platformHeight = 2.0; // Chiều cao nâng lên so với sàn
-            const rampLength = 14;      // Độ dài con dốc
-            const platformLength = 40;  // Độ dài đoạn bằng trên cao
+            const platformHeight = 2.0;
+            const rampLength = 14;
+            const platformLength = 40;
 
-            // 1. Tạo con dốc (Ramp)
             const rampGeom = new THREE.BoxGeometry(2.0, 0.15, rampLength);
             const rampMat = new THREE.MeshStandardMaterial({
-                color: 0x050515,
-                roughness: 0.4,
-                metalness: 0.5,
-                emissive: 0x00ffff,
-                emissiveIntensity: 0.08
+                color: 0x050518, roughness: 0.4, emissive: 0x00ffff, emissiveIntensity: 0.15
             });
             const rampMesh = new THREE.Mesh(rampGeom, rampMat);
-            // Đặt trung điểm dốc ở độ cao một nửa platform
             rampMesh.position.set(lane, platformHeight / 2, zStart);
-            // Nghiêng dốc hướng lên (Sử dụng góc dương)
             rampMesh.rotation.x = Math.asin(platformHeight / rampLength);
 
-            // Viền neon xanh lam phát sáng cho dốc
             const rampEdges = new THREE.EdgesGeometry(rampGeom);
-            const rampWire = new THREE.LineSegments(rampEdges, new THREE.LineBasicMaterial({ color: 0x00ffff, linewidth: 2 }));
-            rampMesh.add(rampWire);
+            rampMesh.add(new THREE.LineSegments(rampEdges, new THREE.LineBasicMaterial({ color: 0x00ffff, linewidth: 2 })));
             scene.add(rampMesh);
 
-            // 2. Tạo đoạn bằng trên cao (Platform)
             const platformGeom = new THREE.BoxGeometry(2.0, platformHeight, platformLength);
             const platformMat = new THREE.MeshStandardMaterial({
-                color: 0x050515,
-                roughness: 0.4,
-                metalness: 0.5,
-                emissive: 0xff00ff,
-                emissiveIntensity: 0.08
+                color: 0x050518, roughness: 0.4, emissive: 0xff00ff, emissiveIntensity: 0.15
             });
             const platformMesh = new THREE.Mesh(platformGeom, platformMat);
-            // Đặt platform ngay phía sau con dốc
             const platformZ = zStart - rampLength / 2 - platformLength / 2;
             platformMesh.position.set(lane, platformHeight / 2, platformZ);
 
-            // Viền neon hồng tím phát sáng cho platform
             const platformEdges = new THREE.EdgesGeometry(platformGeom);
-            const platformWire = new THREE.LineSegments(platformEdges, new THREE.LineBasicMaterial({ color: 0xff00ff, linewidth: 2 }));
-            platformMesh.add(platformWire);
+            platformMesh.add(new THREE.LineSegments(platformEdges, new THREE.LineBasicMaterial({ color: 0xff00ff, linewidth: 2 })));
             scene.add(platformMesh);
 
-            // 3. Đặt chuỗi đồng xu vàng nối tiếp dọc trên mặt Platform
-            const coinCount = 4;
-            for (let i = 0; i < coinCount; i++) {
-                const coinZ = platformZ + platformLength / 2 - 4 - (i * (platformLength / (coinCount + 0.5)));
+            for (let i = 0; i < 4; i++) {
+                const coinZ = platformZ + platformLength / 2 - 4 - (i * (platformLength / 4.5));
                 spawnCoin(lane, platformHeight + 0.6, coinZ);
             }
 
             activeStructures.push({
-                lane: lane,
-                platformHeight: platformHeight,
-                rampLength: rampLength,
-                platformLength: platformLength,
-                rampMesh: rampMesh,
-                platformMesh: platformMesh
+                lane, platformHeight, rampLength, platformLength, rampMesh, platformMesh
             });
         }
 
-        // --- CƠ CHẾ KIỂM TRA CHẶN CHUYỂN LÀN BÊN HÔNG ---
         function canMoveToLane(targetIndex) {
             const targetLaneX = LANES[targetIndex];
-            
             for (let struct of activeStructures) {
                 if (struct.lane === targetLaneX) {
                     const rZ = struct.rampMesh.position.z;
                     const rLen = struct.rampLength;
-                    const rFront = rZ + rLen / 2;
-                    const rBack = rZ - rLen / 2;
-
                     const pZ = struct.platformMesh.position.z;
                     const pLen = struct.platformLength;
-                    const pFront = pZ + pLen / 2;
-                    const pBack = pZ - pLen / 2;
 
-                    // Kiểm tra xem Nền tảng cao (Platform) có đang chắn ngang tầm xe (Z=0) không
-                    if (pBack <= 0 && pFront >= 0) {
-                        // Nếu xe đang chạy dưới sàn (cao độ y < chiều cao hành lang hành lang), chặn rẽ vào hông [2]
-                        if (player.position.y < struct.platformHeight + 0.15) {
-                            return false; 
-                        }
+                    if ((pZ - pLen/2) <= 0 && (pZ + pLen/2) >= 0) {
+                        if (player.position.y < struct.platformHeight + 0.15) return false;
                     }
-
-                    // Kiểm tra xem Dốc (Ramp) có đang chắn ngang tầm xe (Z=0) không
-                    if (rBack <= 0 && rFront >= 0) {
-                        const ratio = rFront / rLen;
-                        const rampHeightAtZ0 = 0.3 + ratio * struct.platformHeight;
-                        // Nếu xe thấp hơn mặt dốc tại điểm đó đáng kể, chặn rẽ vào bên hông dốc [2]
-                        if (player.position.y < rampHeightAtZ0 - 0.2) {
-                            return false;
-                        }
+                    if ((rZ - rLen/2) <= 0 && (rZ + rLen/2) >= 0) {
+                        const ratio = (rZ + rLen/2) / rLen;
+                        if (player.position.y < (0.3 + ratio * struct.platformHeight) - 0.2) return false;
                     }
                 }
             }
-            return true; // Cho phép rẽ bình thường
+            return true;
         }
 
-        // --- KIỂM TRA VA CHẠM (AABB & DISTANCE) ---
         function checkCollisions() {
-            // Va chạm chướng ngại vật (AABB)
-            const pWidth = 1.2;
-            const pHeight = 0.6;
-            const pDepth = 2.0;
-
-            const pMinX = player.position.x - pWidth / 2;
-            const pMaxX = player.position.x + pWidth / 2;
-            const pMinY = player.position.y - pHeight / 2;
-            const pMaxY = player.position.y + pHeight / 2;
-            const pMinZ = player.position.z - pDepth / 2;
-            const pMaxZ = player.position.z + pDepth / 2;
+            const pMinX = player.position.x - 0.6;
+            const pMaxX = player.position.x + 0.6;
+            const pMinY = player.position.y - 0.3;
+            const pMaxY = player.position.y + 0.3;
+            const pMinZ = player.position.z - 1.0;
+            const pMaxZ = player.position.z + 1.0;
 
             for (let i = 0; i < obstacles.length; i++) {
                 const obs = obstacles[i];
-                const oWidth = obs.userData.width;
-                const oHeight = obs.userData.height;
-                const oDepth = obs.userData.depth;
+                const w = obs.userData.width / 2;
+                const h = obs.userData.height / 2;
+                const d = obs.userData.depth / 2;
 
-                const oMinX = obs.position.x - oWidth / 2;
-                const oMaxX = obs.position.x + oWidth / 2;
-                const oMinY = obs.position.y - oHeight / 2;
-                const oMaxY = obs.position.y + oHeight / 2;
-                const oMinZ = obs.position.z - oDepth / 2;
-                const oMaxZ = obs.position.z + oDepth / 2;
-
-                const colX = pMinX <= oMaxX && pMaxX >= oMinX;
-                const colY = pMinY <= oMaxY && pMaxY >= oMinY;
-                const colZ = pMinZ <= oMaxZ && pMaxZ >= oMinZ;
-
-                if (colX && colY && colZ) {
+                if (pMinX <= obs.position.x + w && pMaxX >= obs.position.x - w &&
+                    pMinY <= obs.position.y + h && pMaxY >= obs.position.y - h &&
+                    pMinZ <= obs.position.z + d && pMaxZ >= obs.position.z - d) {
                     endGame();
                     return;
                 }
             }
 
-            // Va chạm với đồng xu (Tối ưu khoảng cách bình phương)
             for (let i = coins.length - 1; i >= 0; i--) {
                 const coin = coins[i];
-                const distSq = player.position.distanceToSquared(coin.position);
-                
-                if (distSq < 1.45) {
+                if (player.position.distanceToSquared(coin.position) < 1.45) {
                     scene.remove(coin);
                     coins.splice(i, 1);
-                    
                     coinsCollected++;
-                    score += 150; // Cộng thẳng 150 điểm thưởng khi ăn xu
+                    score += 150;
                     document.getElementById('coin-val').innerText = coinsCollected;
                     playCoinSound();
                 }
             }
         }
 
-        // --- ĐIỀU KHIỂN ---
         function handleInput(dir) {
             if (!gameRunning) return;
-            if (dir === 'left') {
-                // Chỉ cho phép sang làn trái khi không bị chặn bởi hành lang bên hông [2]
-                if (laneIndex > 0 && canMoveToLane(laneIndex - 1)) {
-                    laneIndex--;
-                }
-            } else if (dir === 'right') {
-                // Chỉ cho phép sang làn phải khi không bị chặn bởi hành lang bên hông [2]
-                if (laneIndex < 2 && canMoveToLane(laneIndex + 1)) {
-                    laneIndex++;
-                }
-            } else if (dir === 'jump') {
-                if (!isJumping) {
-                    isJumping = true;
-                    velocityY = jumpForce;
-                    playJumpSound();
-                }
+            if (dir === 'left' && laneIndex > 0 && canMoveToLane(laneIndex - 1)) {
+                laneIndex--;
+            } else if (dir === 'right' && laneIndex < 2 && canMoveToLane(laneIndex + 1)) {
+                laneIndex++;
+            } else if (dir === 'jump' && !isJumping) {
+                isJumping = true;
+                velocityY = jumpForce;
+                playJumpSound();
             }
         }
 
         window.addEventListener('keydown', (e) => {
-            // Chặn toàn bộ phím điều hướng, phím WASD và Space để tránh lướt trang web
-            const gameKeys = [
-                'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown',
-                'KeyA', 'KeyD', 'KeyW', 'KeyS',
-                'Space'
-            ];
-            if (gameKeys.includes(e.code)) {
-                e.preventDefault();
-            }
-
+            const keys = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'KeyA', 'KeyD', 'KeyW', 'KeyS', 'Space'];
+            if (keys.includes(e.code)) e.preventDefault();
             if (e.code === 'ArrowLeft' || e.code === 'KeyA') handleInput('left');
             if (e.code === 'ArrowRight' || e.code === 'KeyD') handleInput('right');
             if (e.code === 'Space' || e.code === 'ArrowUp' || e.code === 'KeyW') handleInput('jump');
         });
 
-        // Điều khiển cảm ứng di động
         window.addEventListener('touchstart', (e) => {
             if (!gameRunning) return;
             const touchX = e.touches[0].clientX;
             const width = window.innerWidth;
-            
-            if (touchX < width * 0.35) {
-                handleInput('left');
-            } else if (touchX > width * 0.65) {
-                handleInput('right');
-            } else {
-                handleInput('jump');
-            }
+            if (touchX < width * 0.35) handleInput('left');
+            else if (touchX > width * 0.65) handleInput('right');
+            else handleInput('jump');
         });
 
-        // --- VÒNG LẶP TRÒ CHƠI CHÍNH ---
+        // --- VÒNG LẶP CHÍNH (TICK LOOP) ---
         function tick() {
             if (!gameRunning) return;
             requestAnimationFrame(tick);
 
             const dt = Math.min(clock.getDelta(), 0.1); 
 
-            // Tăng dần tốc độ
-            if (speed < maxSpeed) {
-                speed += 0.4 * dt;
-            }
-
-            // Cộng điểm theo thời gian sinh tồn
+            if (speed < maxSpeed) speed += 0.4 * dt;
             score += Math.floor(speed * 0.08);
             document.getElementById('score-val').innerText = score;
 
-            // Cuộn lưới đường đi vô tận
-            gridHelper1.position.z += speed * dt;
-            gridHelper2.position.z += speed * dt;
-            if (gridHelper1.position.z >= 150) gridHelper1.position.z -= 300;
-            if (gridHelper2.position.z >= 150) gridHelper2.position.z -= 300;
-
-            // Di chuyển và tái tạo các tòa nhà nền cảnh
-            for (let i = 0; i < buildings.length; i++) {
-                const b = buildings[i];
-                b.position.z += speed * dt;
-                if (b.position.z > 20) {
-                    b.position.z = -250;
-                    const newHeight = 12 + Math.random() * 25;
-                    b.scale.y = newHeight / b.geometry.parameters.height;
-                    b.position.y = newHeight / 2 - 0.5;
+            // 1. CUỘN 3 PHÂN ĐOẠN ĐƯỜNG LIỀN MẠCH (KHÔNG BAO GIỜ MẤT NỀN)
+            for (let i = 0; i < roadSegments.length; i++) {
+                const seg = roadSegments[i];
+                seg.position.z += speed * dt;
+                
+                // Khi một đoạn đường trôi hẳn ra phía sau camera (vượt quá SEGMENT_LENGTH)
+                if (seg.position.z >= SEGMENT_LENGTH) {
+                    seg.position.z -= TOTAL_ROAD_SPAN; // Đưa thẳng về phía xa nhất (-500)
                 }
             }
 
-            // Quản lý hạt bụi không gian
+            // 2. Di chuyển các tòa nhà hai bên
+            for (let i = 0; i < buildings.length; i++) {
+                const b = buildings[i];
+                b.position.z += speed * dt;
+                if (b.position.z > 25) {
+                    b.position.z = -260 - Math.random() * 20;
+                    b.position.x = (Math.random() > 0.5 ? 1 : -1) * (13 + Math.random() * 16);
+                }
+            }
+
+            // 3. Đèn ăng-ten & Biển hiệu Hologram
+            hoverElapsed += dt;
+            for (let b of beaconLights) {
+                b.mat.opacity = Math.sin(hoverElapsed * b.speed + b.offset) > 0 ? 1.0 : 0.15;
+                b.mat.transparent = true;
+            }
+            for (let hMat of holoMaterials) {
+                hMat.opacity = 0.75 + Math.sin(hoverElapsed * 5) * 0.2;
+            }
+
+            // 4. Bụi sao
             const pos = starParticles.geometry.attributes.position.array;
             for (let i = 2; i < pos.length; i += 3) {
-                pos[i] += speed * 1.4 * dt;
+                pos[i] += speed * 1.5 * dt;
                 if (pos[i] > 10) {
                     pos[i] = -280;
-                    pos[i-1] = Math.random() * 45;
-                    pos[i-2] = (Math.random() - 0.5) * 120;
+                    pos[i-1] = Math.random() * 50;
+                    pos[i-2] = (Math.random() - 0.5) * 140;
                 }
             }
             starParticles.geometry.attributes.position.needsUpdate = true;
 
-            // --- TÍNH TOÁN VẬT LÝ CAO ĐỘ (SÀN NỀN / DỐC / HÀNH LANG) ---
-            let currentFloorY = 0.3; // Độ cao mặc định trên mặt đất
-
+            // 5. Cao độ leo dốc & Vật lý nhân vật
+            let currentFloorY = 0.3;
             for (let i = activeStructures.length - 1; i >= 0; i--) {
                 const s = activeStructures[i];
-                
-                // Di chuyển dốc & hành lang
                 s.rampMesh.position.z += speed * dt;
                 s.platformMesh.position.z += speed * dt;
 
-                // Nếu hành lang trôi tuột hoàn toàn ra sau lưng người chơi (Z > 15) -> dọn dẹp
                 if (s.platformMesh.position.z - s.platformLength / 2 > 15) {
                     scene.remove(s.rampMesh);
                     scene.remove(s.platformMesh);
@@ -935,50 +989,31 @@
                     continue;
                 }
 
-                // Nếu người chơi đang đi chung làn với dốc/nền tảng cao
                 if (Math.abs(player.position.x - s.lane) < 0.95) {
-                    
-                    // Kiểm tra dốc (Ramp) - Người chơi ở Z = 0
-                    const rZ = s.rampMesh.position.z;
-                    const rLen = s.rampLength;
-                    const rFront = rZ + rLen / 2; // Đầu chạm đất (ở gần camera hơn)
-                    const rBack = rZ - rLen / 2;  // Đầu trên cao (ở xa camera hơn)
-
+                    const rFront = s.rampMesh.position.z + s.rampLength / 2;
+                    const rBack = s.rampMesh.position.z - s.rampLength / 2;
                     if (rBack <= 0 && rFront >= 0) {
-                        // Nội suy độ cao dốc dựa trên vị trí Z của dốc so với người chơi (Z=0)
-                        const ratio = rFront / rLen; // tỉ lệ đi lên dốc (0 là đầu dốc, 1 là đỉnh dốc)
-                        currentFloorY = 0.3 + ratio * s.platformHeight;
+                        currentFloorY = 0.3 + (rFront / s.rampLength) * s.platformHeight;
                     }
-
-                    // Kiểm tra Nền tảng cao (Platform)
-                    const pZ = s.platformMesh.position.z;
-                    const pLen = s.platformLength;
-                    const pFront = pZ + pLen / 2;
-                    const pBack = pZ - pLen / 2;
-
+                    const pFront = s.platformMesh.position.z + s.platformLength / 2;
+                    const pBack = s.platformMesh.position.z - s.platformLength / 2;
                     if (pBack <= 0 && pFront >= 0) {
                         currentFloorY = 0.3 + s.platformHeight;
                     }
                 }
             }
 
-            // --- ÁP DỤNG VẬT LÝ RƠI TỰ DO & LÊN DỐC ---
+            // Trọng lực
             if (!isJumping) {
-                // Nếu người chơi đang lơ lửng trên không cao hơn mặt sàn hiện tại (do lách khỏi dốc hoặc đi hết dốc)
                 if (player.position.y > currentFloorY + 0.05) {
                     isJumping = true;
-                    velocityY = 0; // Bắt đầu rơi tự do không có lực đẩy lên
+                    velocityY = 0;
                 } else {
-                    // Xe leo bám dọc sát mặt dốc/sàn mượt mà
                     player.position.y = currentFloorY;
                 }
-            }
-
-            if (isJumping) {
+            } else {
                 player.position.y += velocityY * dt * 60;
-                velocityY -= gravity * dt * 60; // Trọng lực tác động theo thời gian thực
-
-                // Đáp xuống mặt sàn hiện tại (có thể là đất y=0.3 hoặc dốc hoặc nền hành lang)
+                velocityY -= gravity * dt * 60;
                 if (player.position.y <= currentFloorY) {
                     player.position.y = currentFloorY;
                     isJumping = false;
@@ -986,57 +1021,47 @@
                 }
             }
 
-            // Xử lý chuyển làn mượt mà cho Xe (Lerp)
+            // Chuyển làn
             const targetX = LANES[laneIndex];
             player.position.x += (targetX - player.position.x) * 12 * dt;
-            
-            // Hiệu ứng nghiêng xe nhẹ khi lái
             player.rotation.z = -(targetX - player.position.x) * 0.15;
             player.rotation.y = (targetX - player.position.x) * 0.08;
 
-            // --- HIỆU ỨNG XE LƠ LỬNG (HOVER) ---
-            // Áp dụng lên carHoverGroup (con của player) nên KHÔNG ảnh hưởng vật lý nhảy/va chạm thật
-            hoverElapsed += dt;
-            carHoverGroup.position.y = Math.sin(hoverElapsed * 3.2) * 0.045;
-            carHoverGroup.rotation.z = Math.sin(hoverElapsed * 2.1) * 0.015;
-            carHoverGroup.rotation.x = Math.sin(hoverElapsed * 1.7) * 0.012;
+            // Hover xe
+            carHoverGroup.position.y = Math.sin(hoverElapsed * 3.5) * 0.04;
+            carHoverGroup.rotation.z = Math.sin(hoverElapsed * 2.2) * 0.015;
 
-            // Nhấp nháy các bộ phận phát sáng của xe (đệm phản trọng lực, lõi động cơ, tia lửa...)
             for (let i = 0; i < carPulseParts.length; i++) {
                 const p = carPulseParts[i];
                 p.mat[p.prop] = p.base + Math.sin(hoverElapsed * p.speed + p.phase) * p.amp;
             }
 
-            // Đồng bộ bóng xe dưới mặt đất thật (luôn nằm tại y=0.01)
             shadowMesh.position.x = player.position.x;
             const scaleFactor = Math.max(0.1, 1 - (player.position.y - 0.3) * 0.4);
             shadowMesh.scale.set(scaleFactor, scaleFactor, 1);
 
-            // Di chuyển & Xoay các đồng xu
+            // Đồng xu
             for (let i = coins.length - 1; i >= 0; i--) {
                 const coin = coins[i];
                 coin.position.z += speed * dt;
                 coin.rotation.y += coin.userData.spinSpeed * dt;
-
-                // Đồng xu trôi quá màn hình -> Xóa
                 if (coin.position.z > 15) {
                     scene.remove(coin);
                     coins.splice(i, 1);
                 }
             }
 
-            // Di chuyển & Xóa chướng ngại vật
+            // Vật cản
             for (let i = obstacles.length - 1; i >= 0; i--) {
                 const obs = obstacles[i];
                 obs.position.z += speed * dt;
-
                 if (obs.position.z > 15) {
                     scene.remove(obs);
                     obstacles.splice(i, 1);
                 }
             }
 
-            // Định kỳ spawn các vật thể mới
+            // Chu kỳ tạo mới
             spawnTimer += dt;
             const currentObsInterval = Math.max(0.65, spawnInterval - (speed - baseSpeed) * 0.018);
             if (spawnTimer >= currentObsInterval) {
@@ -1056,23 +1081,19 @@
                 spawnStructure();
             }
 
-            // Kiểm tra va chạm đồng xu & chướng ngại vật
             checkCollisions();
 
-            // Lắc camera nhẹ bám sát nhân vật
             camera.position.x += (player.position.x * 0.35 - camera.position.x) * 4 * dt;
-
             renderer.render(scene, camera);
         }
 
-        // --- TRẠNG THÁI TRÒ CHƠI ---
+        // --- KHỞI CHẠY & RESET ---
         function initGame() {
             document.getElementById('start-screen').style.display = 'none';
             initAudio();
             setupThreeJS();
-            
             gameRunning = true;
-            clock.getDelta(); // Reset clock
+            clock.getDelta();
             tick();
         }
 
@@ -1080,32 +1101,26 @@
             gameRunning = false;
             playCrashSound();
             clearInterval(bgmIntervalId);
-            
             document.getElementById('final-score').innerText = score;
             document.getElementById('game-over-screen').style.display = 'block';
         }
 
         function resetGame() {
-            // Xóa toàn bộ đồng xu cũ
-            for (let i = 0; i < coins.length; i++) {
-                scene.remove(coins[i]);
-            }
+            for (let c of coins) scene.remove(c);
             coins = [];
-
-            // Xóa toàn bộ chướng ngại vật cũ
-            for (let i = 0; i < obstacles.length; i++) {
-                scene.remove(obstacles[i]);
-            }
+            for (let o of obstacles) scene.remove(o);
             obstacles = [];
-
-            // Xóa dốc và nền tảng cũ
-            for (let i = 0; i < activeStructures.length; i++) {
-                scene.remove(activeStructures[i].rampMesh);
-                scene.remove(activeStructures[i].platformMesh);
+            for (let s of activeStructures) {
+                scene.remove(s.rampMesh);
+                scene.remove(s.platformMesh);
             }
             activeStructures = [];
 
-            // Đặt lại các thông số nhân vật
+            // Đặt lại vị trí 3 phân đoạn đường liền nhau
+            for (let i = 0; i < roadSegments.length; i++) {
+                roadSegments[i].position.z = -i * SEGMENT_LENGTH;
+            }
+
             laneIndex = 1;
             player.position.set(LANES[laneIndex], 0.3, 0);
             isJumping = false;
@@ -1121,13 +1136,12 @@
             document.getElementById('score-val').innerText = '0';
             document.getElementById('coin-val').innerText = '0';
 
-            initAudio(); // Chạy lại nhạc nền
+            initAudio();
             gameRunning = true;
             clock.getDelta();
             tick();
         }
 
-        // Tự động co giãn theo trình duyệt
         window.addEventListener('resize', () => {
             if (!camera || !renderer) return;
             camera.aspect = window.innerWidth / window.innerHeight;
