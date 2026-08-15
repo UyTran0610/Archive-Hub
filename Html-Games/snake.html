@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Rắn Săn Mồi — Retro Arcade</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-deep:#05060a;
+    --bg-panel:#0b0f16;
+    --bg-panel-2:#0e1420;
+    --neon-cyan:#00fff2;
+    --neon-green:#39ff88;
+    --neon-pink:#ff2e63;
+    --neon-yellow:#ffd60a;
+    --neon-purple:#b026ff;
+    --grid-line:rgba(0,255,242,0.06);
+    --text-dim:#7d8aa0;
+    --bezel:#14181f;
+  }
+
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+
+  html,body{
+    margin:0; padding:0; height:100%;
+    background:var(--bg-deep);
+    overflow:hidden;
+    overscroll-behavior:none;
+    touch-action:none;
+    font-family:'VT323', monospace;
+    color:#dfe7f0;
+  }
+
+  body{
+    display:flex; align-items:center; justify-content:center;
+    min-height:100dvh;
+    background:
+      radial-gradient(ellipse at 50% -10%, rgba(0,255,242,0.08), transparent 55%),
+      radial-gradient(ellipse at 50% 110%, rgba(255,46,99,0.06), transparent 55%),
+      var(--bg-deep);
+  }
+
+  /* ==== Hiệu ứng màn hình CRT cổ điển ==== */
+  .crt-overlay{
+    position:fixed; inset:0; pointer-events:none; z-index:50;
+    background:repeating-linear-gradient(
+      to bottom,
+      rgba(0,0,0,0.0) 0px,
+      rgba(0,0,0,0.0) 2px,
+      rgba(0,0,0,0.18) 3px,
+      rgba(0,0,0,0.0) 4px
+    );
+    mix-blend-mode:multiply;
+    animation:flicker 6s infinite;
+  }
+  @keyframes flicker{
+    0%,96%,100%{ opacity:1; }
+    97%{ opacity:0.85; }
+    98%{ opacity:1; }
+    99%{ opacity:0.9; }
+  }
+
+  .app{
+    width:100%; max-width:520px;
+    padding:14px 14px calc(14px + env(safe-area-inset-bottom));
+    display:flex; flex-direction:column; align-items:center; gap:10px;
+    height:100dvh;
+    justify-content:center;
+  }
+
+  /* ==== Bảng hiệu (marquee) ==== */
+  .marquee{ text-align:center; }
+  .marquee h1{
+    margin:0;
+    font-family:'Press Start 2P', monospace;
+    font-size:clamp(14px, 4.6vw, 22px);
+    letter-spacing:2px;
+    color:var(--neon-green);
+    text-shadow:
+      0 0 4px var(--neon-green),
+      0 0 14px rgba(57,255,136,0.7),
+      0 0 28px rgba(57,255,136,0.4);
+  }
+  .marquee p{
+    margin:4px 0 0;
+    font-size:15px;
+    letter-spacing:3px;
+    color:var(--text-dim);
+  }
+
+  /* ==== Bảng điểm kiểu LED ==== */
+  .scoreboard{
+    width:100%;
+    display:flex; align-items:stretch; gap:8px;
+  }
+  .score-box{
+    flex:1;
+    background:linear-gradient(180deg,var(--bg-panel-2),var(--bg-panel));
+    border:1px solid rgba(0,255,242,0.25);
+    border-radius:6px;
+    padding:8px 4px;
+    text-align:center;
+    box-shadow:inset 0 0 10px rgba(0,255,242,0.08), 0 0 8px rgba(0,0,0,0.4);
+  }
+  .score-box .label{
+    font-family:'Press Start 2P', monospace;
+    font-size:clamp(6px, 1.8vw, 8px);
+    letter-spacing:0.5px;
+    color:var(--text-dim);
+    white-space:nowrap;
+  }
+  .score-box .value{
+    font-family:'Press Start 2P', monospace;
+    font-size:clamp(13px,4vw,18px);
+    color:var(--neon-yellow);
+    text-shadow:0 0 6px rgba(255,214,10,0.7);
+    margin-top:6px;
+  }
+  .icon-btn{
+    width:42px; flex:none;
+    background:linear-gradient(180deg,var(--bg-panel-2),var(--bg-panel));
+    border:1px solid rgba(176,38,255,0.35);
+    border-radius:6px;
+    color:var(--neon-purple);
+    font-size:18px;
+    cursor:pointer;
+    box-shadow:inset 0 0 10px rgba(176,38,255,0.08);
+  }
+  .icon-btn:active{ transform:scale(0.94); }
+
+  /* ==== Khung canvas kiểu màn hình arcade có viền bezel ==== */
+  .canvas-wrap{
+    position:relative;
+    width:100%;
+    max-width:min(90vw, 62dvh, 480px);
+    aspect-ratio:1/1;
+    background:var(--bezel);
+    border-radius:14px;
+    padding:10px;
+    box-shadow:
+      0 0 0 1px rgba(255,255,255,0.03) inset,
+      0 10px 30px rgba(0,0,0,0.6),
+      0 0 24px rgba(0,255,242,0.06);
+    touch-action:none;
+  }
+  .canvas-wrap::before, .canvas-wrap::after,
+  .canvas-wrap .screw-tl, .canvas-wrap .screw-tr,
+  .canvas-wrap .screw-bl, .canvas-wrap .screw-br{
+    content:''; position:absolute; width:7px; height:7px; border-radius:50%;
+    background:radial-gradient(circle at 35% 35%, #555, #111);
+    box-shadow:0 0 3px rgba(0,0,0,0.8);
+  }
+  .canvas-wrap .screw-tl{ top:6px; left:6px; }
+  .canvas-wrap .screw-tr{ top:6px; right:6px; }
+  .canvas-wrap .screw-bl{ bottom:6px; left:6px; }
+  .canvas-wrap .screw-br{ bottom:6px; right:6px; }
+
+  #gameCanvas{
+    display:block;
+    width:100%; height:100%;
+    background:#03040a;
+    border-radius:6px;
+    box-shadow:inset 0 0 24px rgba(0,0,0,0.9);
+  }
+
+  .overlay{
+    position:absolute; inset:10px;
+    border-radius:6px;
+    background:rgba(3,4,10,0.88);
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:10px; text-align:center; padding:16px;
+    backdrop-filter:blur(1px);
+  }
+  .overlay.hidden{ display:none; }
+  .overlay h2{
+    font-family:'Press Start 2P', monospace;
+    font-size:clamp(13px,4vw,18px);
+    margin:0;
+    color:var(--neon-cyan);
+    text-shadow:0 0 10px rgba(0,255,242,0.8);
+  }
+  .overlay .sub{
+    font-size:16px; color:var(--text-dim); max-width:280px; line-height:1.5;
+  }
+  .overlay .final-score{
+    font-family:'Press Start 2P', monospace;
+    font-size:20px; color:var(--neon-yellow);
+    text-shadow:0 0 8px rgba(255,214,10,0.8);
+  }
+  .overlay .new-record{
+    font-size:16px; color:var(--neon-pink);
+    text-shadow:0 0 8px rgba(255,46,99,0.8);
+    letter-spacing:1px;
+  }
+  .btn-arcade{
+    font-family:'Press Start 2P', monospace;
+    font-size:12px;
+    padding:12px 20px;
+    border-radius:8px;
+    border:none;
+    cursor:pointer;
+    background:linear-gradient(180deg, var(--neon-green), #1fae5c);
+    color:#04140a;
+    box-shadow:0 4px 0 #0b6b34, 0 0 16px rgba(57,255,136,0.5);
+    letter-spacing:1px;
+  }
+  .btn-arcade:active{ transform:translateY(3px); box-shadow:0 1px 0 #0b6b34, 0 0 10px rgba(57,255,136,0.4); }
+
+  .controls-hint{
+    font-size:14px; color:var(--text-dim); text-align:center; letter-spacing:0.5px;
+  }
+  .controls-hint b{ color:var(--neon-cyan); }
+
+  /* ==== D-pad ảo cho di động ==== */
+  .dpad{
+    display:grid;
+    grid-template-columns:56px 56px 56px;
+    grid-template-rows:56px 56px 56px;
+    gap:6px;
+    user-select:none;
+  }
+  .dpad button{
+    grid-area:auto;
+    border:none;
+    border-radius:12px;
+    background:linear-gradient(180deg,#1a212e,#0c1017);
+    color:var(--neon-cyan);
+    font-size:20px;
+    box-shadow:0 3px 0 #030507, inset 0 0 8px rgba(0,255,242,0.08), 0 0 10px rgba(0,255,242,0.12);
+    -webkit-touch-callout:none;
+    touch-action:none;
+  }
+  .dpad button:active, .dpad button.pressed{
+    transform:translateY(2px);
+    box-shadow:0 1px 0 #030507, inset 0 0 10px rgba(0,255,242,0.25);
+    color:#fff;
+  }
+  .dpad .up{ grid-column:2; grid-row:1; }
+  .dpad .left{ grid-column:1; grid-row:2; }
+  .dpad .mid{ grid-column:2; grid-row:2; background:linear-gradient(180deg,#221228,#0c0a10); color:var(--neon-purple); font-size:16px; }
+  .dpad .right{ grid-column:3; grid-row:2; }
+  .dpad .down{ grid-column:2; grid-row:3; }
+
+  @media (min-width:720px){
+    .dpad{ display:none; }
+    .controls-hint.mobile-only{ display:none; }
+  }
+  @media (max-width:719px){
+    .controls-hint.desktop-only{ display:none; }
+  }
+  @media (max-height:640px){
+    .marquee p{ display:none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="crt-overlay"></div>
+
+<div class="app">
+
+  <div class="marquee">
+    <h1>SNAKE</h1>
+    <p>ARCADE EDITION</p>
+  </div>
+
+  <div class="scoreboard">
+    <div class="score-box">
+      <div class="label">SCORE</div>
+      <div class="value" id="scoreVal">0</div>
+    </div>
+    <div class="score-box">
+      <div class="label">HI-SCORE</div>
+      <div class="value" id="highScoreVal">0</div>
+    </div>
+    <div class="score-box">
+      <div class="label">LEVEL</div>
+      <div class="value" id="levelVal">1</div>
+    </div>
+    <button class="icon-btn" id="muteBtn" aria-label="Bật/tắt âm thanh">🔊</button>
+    <button class="icon-btn" id="pauseBtn" aria-label="Tạm dừng">⏸</button>
+  </div>
+
+  <div class="canvas-wrap" id="canvasWrap">
+    <span class="screw-tl"></span><span class="screw-tr"></span>
+    <span class="screw-bl"></span><span class="screw-br"></span>
+    <canvas id="gameCanvas"></canvas>
+
+    <div class="overlay" id="startScreen">
+      <h2>READY?</h2>
+      <p class="sub">Điều khiển rắn ăn mồi, tránh đâm vào tường và tự cắn trúng thân.<br>Mỗi lần ăn, rắn dài ra và tốc độ tăng dần!</p>
+      <button class="btn-arcade" id="startBtn">START</button>
+    </div>
+
+    <div class="overlay hidden" id="pauseScreen">
+      <h2>PAUSE</h2>
+      <p class="sub">Nhấn Space hoặc nút ⏸ để chơi tiếp</p>
+    </div>
+
+    <div class="overlay hidden" id="gameOverScreen">
+      <h2>GAME OVER</h2>
+      <div class="final-score" id="finalScoreVal">0</div>
+      <div class="new-record hidden" id="newRecordLabel">★ KỶ LỤC MỚI ★</div>
+      <button class="btn-arcade" id="restartBtn">REPLAY</button>
+    </div>
+  </div>
+
+  <div class="controls-hint desktop-only">
+    Dùng phím <b>mũi tên / WASD</b> để di chuyển · <b>Space</b> để tạm dừng
+  </div>
+  <div class="controls-hint mobile-only">
+    Vuốt trên màn hình hoặc dùng nút bên dưới để điều khiển
+  </div>
+
+  <div class="dpad" id="dpad">
+    <button class="up" data-dir="UP" aria-label="Lên">▲</button>
+    <button class="left" data-dir="LEFT" aria-label="Trái">◀</button>
+    <button class="mid" id="dpadPause" aria-label="Tạm dừng">⏸</button>
+    <button class="right" data-dir="RIGHT" aria-label="Phải">▶</button>
+    <button class="down" data-dir="DOWN" aria-label="Xuống">▼</button>
+  </div>
+
+</div>
+
+<script>
+(() => {
+  'use strict';
+
+  /* ================== KHAI BÁO CÁC PHẦN TỬ DOM ================== */
+  const canvas       = document.getElementById('gameCanvas');
+  const ctx          = canvas.getContext('2d');
+  const canvasWrap    = document.getElementById('canvasWrap');
+  const scoreValEl   = document.getElementById('scoreVal');
+  const highScoreEl  = document.getElementById('highScoreVal');
+  const levelValEl   = document.getElementById('levelVal');
+  const startScreen  = document.getElementById('startScreen');
+  const pauseScreen  = document.getElementById('pauseScreen');
+  const gameOverScreen = document.getElementById('gameOverScreen');
+  const finalScoreEl = document.getElementById('finalScoreVal');
+  const newRecordEl  = document.getElementById('newRecordLabel');
+  const startBtn     = document.getElementById('startBtn');
+  const restartBtn   = document.getElementById('restartBtn');
+  const pauseBtn     = document.getElementById('pauseBtn');
+  const dpadPauseBtn = document.getElementById('dpadPause');
+  const muteBtn      = document.getElementById('muteBtn');
+  const dpad         = document.getElementById('dpad');
+
+  /* ================== HẰNG SỐ & TRẠNG THÁI GAME ================== */
+  const GRID = 20;
+  const BASE_SPEED = 150;
+  const MIN_SPEED  = 65;
+  const SPEED_STEP = 3;
+
+  const DIRS = {
+    UP:    { x: 0, y: -1 },
+    DOWN:  { x: 0, y: 1 },
+    LEFT:  { x: -1, y: 0 },
+    RIGHT: { x: 1, y: 0 },
+  };
+
+  let cellSize = 0;
+  let snake = [];
+  let direction = DIRS.RIGHT;
+  let directionQueue = [];
+  let food = { x: 10, y: 10 };
+  let score = 0;
+  let foodEaten = 0;
+  let currentSpeed = BASE_SPEED;
+  let highScore = Number(localStorage.getItem('snakeHighScore') || 0);
+  let muted = localStorage.getItem('snakeMuted') === '1';
+  let gameState = 'start';
+
+  let lastTime = 0;
+  let accumulator = 0;
+
+  highScoreEl.textContent = highScore;
+  muteBtn.textContent = muted ? '🔇' : '🔊';
+
+  /* ================== ÂM THANH ================== */
+  let audioCtx = null;
+  function ensureAudio() {
+    if (!audioCtx) {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (AC) audioCtx = new AC();
+    }
+  }
+  function beep(freq, duration, type = 'square', gainVal = 0.05) {
+    if (muted || !audioCtx) return;
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = type;
+    osc.frequency.value = freq;
+    gain.gain.value = gainVal;
+    osc.connect(gain).connect(audioCtx.destination);
+    osc.start();
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+    osc.stop(audioCtx.currentTime + duration);
+  }
+  const playEatSound = () => beep(880, 0.1, 'square', 0.06);
+  const playGameOverSound = () => {
+    if (muted || !audioCtx) return;
+    beep(220, 0.18, 'sawtooth', 0.06);
+    setTimeout(() => beep(140, 0.25, 'sawtooth', 0.06), 120);
+  };
+
+  function vibrate(pattern) {
+    if (navigator.vibrate) navigator.vibrate(pattern);
+  }
+
+  /* ================== THIẾT LẬP KÍCH THƯỚC CANVAS RESPONSIVE ================== */
+  function resizeCanvas() {
+    const size = canvasWrap.clientWidth - 20;
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = Math.round(size * dpr);
+    canvas.height = Math.round(size * dpr);
+    canvas.style.width = size + 'px';
+    canvas.style.height = size + 'px';
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    cellSize = size / GRID;
+    draw(performance.now());
+  }
+
+  /* ================== LOGIC KHỞI TẠO VÁN CHƠI MỚI ================== */
+  function startGame() {
+    ensureAudio();
+    const mid = Math.floor(GRID / 2);
+    snake = [
+      { x: mid - 1, y: mid },
+      { x: mid - 2, y: mid },
+      { x: mid - 3, y: mid },
+    ];
+    direction = DIRS.RIGHT;
+    directionQueue = [];
+    score = 0;
+    foodEaten = 0;
+    currentSpeed = BASE_SPEED;
+    updateScoreUI();
+    spawnFood();
+    gameState = 'playing';
+    accumulator = 0;
+    startScreen.classList.add('hidden');
+    pauseScreen.classList.add('hidden');
+    gameOverScreen.classList.add('hidden');
+  }
+
+  function spawnFood() {
+    let pos;
+    do {
+      pos = {
+        x: Math.floor(Math.random() * GRID),
+        y: Math.floor(Math.random() * GRID),
+      };
+    } while (snake.some(seg => seg.x === pos.x && seg.y === pos.y));
+    food = pos;
+  }
+
+  /* ================== XỬ LÝ HƯỚNG ĐI ================== */
+  function queueDirection(dirName) {
+    if (gameState === 'start') { startGame(); }
+    if (gameState !== 'playing') return;
+
+    const vec = DIRS[dirName];
+    const last = directionQueue.length ? directionQueue[directionQueue.length - 1] : direction;
+    const isOpposite = vec.x === -last.x && vec.y === -last.y;
+    const isSame = vec.x === last.x && vec.y === last.y;
+    if (isOpposite || isSame) return;
+    if (directionQueue.length < 2) directionQueue.push(vec);
+  }
+
+  /* ================== CẬP NHẬT TRẠNG THÁI GAME ================== */
+  function update() {
+    if (directionQueue.length) direction = directionQueue.shift();
+
+    const head = snake[0];
+    const newHead = { x: head.x + direction.x, y: head.y + direction.y };
+
+    if (newHead.x < 0 || newHead.x >= GRID || newHead.y < 0 || newHead.y >= GRID) {
+      return gameOver();
+    }
+    if (snake.some(seg => seg.x === newHead.x && seg.y === newHead.y)) {
+      return gameOver();
+    }
+
+    snake.unshift(newHead);
+
+    if (newHead.x === food.x && newHead.y === food.y) {
+      score += 10;
+      foodEaten += 1;
+      currentSpeed = Math.max(MIN_SPEED, BASE_SPEED - foodEaten * SPEED_STEP);
+      updateScoreUI();
+      spawnFood();
+      playEatSound();
+      vibrate(25);
+    } else {
+      snake.pop();
+    }
+  }
+
+  function updateScoreUI() {
+    scoreValEl.textContent = score;
+    levelValEl.textContent = Math.floor(foodEaten / 5) + 1;
+  }
+
+  function gameOver() {
+    gameState = 'gameover';
+    let isRecord = false;
+    if (score > highScore) {
+      highScore = score;
+      localStorage.setItem('snakeHighScore', String(highScore));
+      highScoreEl.textContent = highScore;
+      isRecord = true;
+    }
+    finalScoreEl.textContent = score;
+    newRecordEl.classList.toggle('hidden', !isRecord);
+    gameOverScreen.classList.remove('hidden');
+    playGameOverSound();
+    vibrate([40, 60, 40]);
+  }
+
+  function togglePause() {
+    if (gameState === 'playing') {
+      gameState = 'paused';
+      pauseScreen.classList.remove('hidden');
+    } else if (gameState === 'paused') {
+      gameState = 'playing';
+      pauseScreen.classList.add('hidden');
+    }
+  }
+
+  /* ================== VẼ (RENDER) ================== */
+  function drawRoundedRect(x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + w, y, x + w, y + h, r);
+    ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r);
+    ctx.arcTo(x, y, x + w, y, r);
+    ctx.closePath();
+  }
+
+  function draw(timestamp) {
+    const size = GRID * cellSize;
+    ctx.clearRect(0, 0, size, size);
+
+    ctx.strokeStyle = 'rgba(0,255,242,0.05)';
+    ctx.lineWidth = 1;
+    for (let i = 1; i < GRID; i++) {
+      ctx.beginPath();
+      ctx.moveTo(i * cellSize, 0); ctx.lineTo(i * cellSize, size);
+      ctx.moveTo(0, i * cellSize); ctx.lineTo(size, i * cellSize);
+      ctx.stroke();
+    }
+
+    const pulse = 1 + 0.12 * Math.sin(timestamp / 180);
+    const fcx = food.x * cellSize + cellSize / 2;
+    const fcy = food.y * cellSize + cellSize / 2;
+    const fr = (cellSize / 2.4) * pulse;
+    const grad = ctx.createRadialGradient(fcx, fcy, 0, fcx, fcy, fr);
+    grad.addColorStop(0, '#fff4c2');
+    grad.addColorStop(0.35, '#ffd60a');
+    grad.addColorStop(1, '#ff2e63');
+    ctx.save();
+    ctx.shadowColor = 'rgba(255,46,99,0.9)';
+    ctx.shadowBlur = 16;
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.arc(fcx, fcy, fr, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+
+    for (let i = snake.length - 1; i >= 0; i--) {
+      const seg = snake[i];
+      const t = snake.length > 1 ? i / (snake.length - 1) : 0;
+      const isHead = i === 0;
+      const r = Math.round(57 + t * (0 - 57));
+      const g = Math.round(255 + t * (255 - 255));
+      const b = Math.round(136 + t * (242 - 136));
+      const color = isHead ? '#39ff88' : `rgb(${r},${g},${b})`;
+      const pad = 1.5;
+      ctx.save();
+      ctx.shadowColor = 'rgba(57,255,136,0.55)';
+      ctx.shadowBlur = isHead ? 12 : 6;
+      ctx.fillStyle = color;
+      drawRoundedRect(
+        seg.x * cellSize + pad, seg.y * cellSize + pad,
+        cellSize - pad * 2, cellSize - pad * 2,
+        cellSize * 0.28
+      );
+      ctx.fill();
+      ctx.restore();
+
+      if (isHead) {
+        ctx.fillStyle = '#03140a';
+        const cx = seg.x * cellSize + cellSize / 2;
+        const cy = seg.y * cellSize + cellSize / 2;
+        const off = cellSize * 0.18;
+        const eyeR = Math.max(1.5, cellSize * 0.09);
+        let e1 = { x: cx - off, y: cy - off }, e2 = { x: cx + off, y: cy - off };
+        if (direction === DIRS.RIGHT) { e1 = { x: cx + off, y: cy - off }; e2 = { x: cx + off, y: cy + off }; }
+        else if (direction === DIRS.LEFT) { e1 = { x: cx - off, y: cy - off }; e2 = { x: cx - off, y: cy + off }; }
+        else if (direction === DIRS.DOWN) { e1 = { x: cx - off, y: cy + off }; e2 = { x: cx + off, y: cy + off }; }
+        else { e1 = { x: cx - off, y: cy - off }; e2 = { x: cx + off, y: cy - off }; }
+        ctx.beginPath(); ctx.arc(e1.x, e1.y, eyeR, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(e2.x, e2.y, eyeR, 0, Math.PI * 2); ctx.fill();
+      }
+    }
+  }
+
+  /* ================== GAME LOOP ================== */
+  function loop(timestamp) {
+    requestAnimationFrame(loop);
+    const delta = timestamp - lastTime;
+    lastTime = timestamp;
+
+    if (gameState === 'playing') {
+      accumulator += delta;
+      while (accumulator >= currentSpeed) {
+        update();
+        accumulator -= currentSpeed;
+        if (gameState !== 'playing') { accumulator = 0; break; }
+      }
+    }
+    if (cellSize > 0) draw(timestamp);
+  }
+
+  /* ================== BÀN PHÍM ================== */
+  const KEY_MAP = {
+    arrowup: 'UP', arrowdown: 'DOWN', arrowleft: 'LEFT', arrowright: 'RIGHT',
+    w: 'UP', s: 'DOWN', a: 'LEFT', d: 'RIGHT',
+  };
+  window.addEventListener('keydown', (e) => {
+    const key = e.key.toLowerCase();
+    if (KEY_MAP[key]) {
+      e.preventDefault();
+      queueDirection(KEY_MAP[key]);
+    } else if (key === ' ') {
+      e.preventDefault();
+      if (gameState === 'start') startGame();
+      else togglePause();
+    }
+  }, { passive: false });
+
+  /* ================== D-PAD ẢO ================== */
+  dpad.querySelectorAll('button[data-dir]').forEach(btn => {
+    const dir = btn.dataset.dir;
+    btn.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      btn.classList.add('pressed');
+      queueDirection(dir);
+      vibrate(10);
+    }, { passive: false });
+    btn.addEventListener('touchend', () => btn.classList.remove('pressed'));
+    btn.addEventListener('click', () => queueDirection(dir));
+  });
+  [pauseBtn, dpadPauseBtn].forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (gameState === 'start') return;
+      togglePause();
+    });
+    btn.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      if (gameState === 'start') return;
+      togglePause();
+    }, { passive: false });
+  });
+
+  muteBtn.addEventListener('click', () => {
+    muted = !muted;
+    localStorage.setItem('snakeMuted', muted ? '1' : '0');
+    muteBtn.textContent = muted ? '🔇' : '🔊';
+  });
+
+  /* ================== VUỐT MÀN HÌNH ================== */
+  let touchStartX = 0, touchStartY = 0;
+  canvasWrap.addEventListener('touchstart', (e) => {
+    touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
+  }, { passive: true });
+
+  canvasWrap.addEventListener('touchmove', (e) => {
+    e.preventDefault();
+  }, { passive: false });
+
+  canvasWrap.addEventListener('touchend', (e) => {
+    const dx = e.changedTouches[0].clientX - touchStartX;
+    const dy = e.changedTouches[0].clientY - touchStartY;
+    const SWIPE_THRESHOLD = 20;
+    if (Math.max(Math.abs(dx), Math.abs(dy)) < SWIPE_THRESHOLD) return;
+    if (Math.abs(dx) > Math.abs(dy)) {
+      queueDirection(dx > 0 ? 'RIGHT' : 'LEFT');
+    } else {
+      queueDirection(dy > 0 ? 'DOWN' : 'UP');
+    }
+  });
+
+  startBtn.addEventListener('click', startGame);
+  restartBtn.addEventListener('click', startGame);
+
+  window.addEventListener('resize', resizeCanvas);
+  window.addEventListener('orientationchange', () => setTimeout(resizeCanvas, 200));
+
+  resizeCanvas();
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>

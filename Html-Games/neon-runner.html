@@ -188,8 +188,12 @@
         function initAudio() {
             if (!audioCtx) {
                 audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                startBGM();
             }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            clearInterval(bgmIntervalId);
+            startBGM();
         }
 
         function playJumpSound() {
