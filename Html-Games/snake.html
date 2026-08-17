@@ -160,6 +160,7 @@
     width: 100%;
     max-width: min(88vw, 46dvh, 420px);
     aspect-ratio: 1/1;
+    flex-shrink: 0;
     background: var(--bezel);
     border-radius: 12px;
     padding: 8px;
@@ -271,7 +272,15 @@
   @media (min-width: 720px){
     .dpad{ display: none; }
     .controls-hint.mobile-only{ display: none; }
-    .canvas-wrap{ max-width: min(90vw, 55dvh, 460px); }
+    .app{
+      max-width: 720px;
+      height: 100%;
+      max-height: 100dvh;
+      justify-content: center;
+      gap: 20px;
+      padding: 20px 24px;
+    }
+    .canvas-wrap{ max-width: min(72vw, 76vh, 640px); }
   }
   @media (max-width: 719px){
     .controls-hint.desktop-only{ display: none; }
@@ -437,8 +446,53 @@
     if (navigator.vibrate) navigator.vibrate(pattern);
   }
 
-  /* ================== THIẾT LẬP KÍCH THƯỚC CANVAS RESPONSIVE ================== */
+  /* ================== THIẾT LẬP KÍCH THƯỚC KHUNG CHƠI (VUÔNG) ================== */
+  const appEl = document.querySelector('.app');
+  const marqueeEl = document.querySelector('.marquee');
+  const scoreboardEl = document.querySelector('.scoreboard');
+
+  function fitCanvasWrap() {
+    // Bỏ kích thước cũ để đo lại chiều cao tự nhiên của các phần tử khác
+    canvasWrap.style.width = '';
+    canvasWrap.style.height = '';
+
+    const appCS = getComputedStyle(appEl);
+    const gap = parseFloat(appCS.rowGap || appCS.gap) || 0;
+    const padTop = parseFloat(appCS.paddingTop) || 0;
+    const padBottom = parseFloat(appCS.paddingBottom) || 0;
+    const padLeft = parseFloat(appCS.paddingLeft) || 0;
+    const padRight = parseFloat(appCS.paddingRight) || 0;
+
+    let usedHeight = padTop + padBottom;
+    let gapCount = 0;
+
+    usedHeight += marqueeEl.offsetHeight; gapCount++;
+    usedHeight += scoreboardEl.offsetHeight; gapCount++;
+    gapCount++; // gap trước canvas-wrap đã tính, còn lại canvas-wrap tự thân
+
+    document.querySelectorAll('.controls-hint').forEach(el => {
+      if (getComputedStyle(el).display !== 'none') {
+        usedHeight += el.offsetHeight; gapCount++;
+      }
+    });
+    if (getComputedStyle(dpad).display !== 'none') {
+      usedHeight += dpad.offsetHeight; gapCount++;
+    }
+
+    usedHeight += gap * gapCount;
+
+    const availableHeight = window.innerHeight - usedHeight;
+    const availableWidth = appEl.clientWidth - padLeft - padRight;
+    const cs = getComputedStyle(canvasWrap);
+    const capPx = parseFloat(cs.maxWidth) || Infinity;
+
+    const size = Math.max(140, Math.min(availableWidth, availableHeight, capPx));
+    canvasWrap.style.width = size + 'px';
+    canvasWrap.style.height = size + 'px';
+  }
+
   function resizeCanvas() {
+    fitCanvasWrap();
     const size = canvasWrap.clientWidth - 16;
     if (size <= 0) return;
     const dpr = window.devicePixelRatio || 1;

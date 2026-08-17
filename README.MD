@@ -11,6 +11,7 @@ Source của [Uy's Archive Hub](https://uytran0610.github.io/Archive-Hub/) - Web
   - **2048:** Game 2048 phong cách đáng yêu.
   - **Neon Runner 3D:** Game chạy vô tận đồ họa 3D.
   - **Octopus Flappy:** Game Flappy phong cách bạch tuộc vũ trụ.
+  - **Snake:** Game Snake phong cách arcade.
 
 - **Markdown Live:** Trình soạn thảo Markdown thời gian thực:
   - Soạn thảo & Xem trước tức thì.

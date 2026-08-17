@@ -327,6 +327,13 @@
     line-height:1.5;
   }
 
+  /* Tighter vertical rhythm on desktop so more of the viewport height goes to
+     the actual board instead of margins/padding, and so a bigger board fits. */
+  body.desktop-mode .app{ padding:12px 18px 16px; }
+  body.desktop-mode .scores{ margin-top:8px; }
+  body.desktop-mode .controls-row{ margin-top:10px; margin-bottom:10px; }
+  body.desktop-mode .hint{ margin-top:10px; font-size:.72rem; line-height:1.35; }
+
   @media (max-width:380px){
     .title-row h1{ font-size:1.6rem; }
     .score-box .value{ font-size:1.1rem; }
@@ -387,7 +394,7 @@
     </div>
   </div>
 
-  <p class="hint">Dùng phím mũi tên ← ↑ → ↓ hoặc vuốt trên bàn cờ để di chuyển.<br>Ghép hai ô cùng số để nhân đôi điểm nhé! 🍬</p>
+  <p class="hint">Dùng phím ← ↑ → ↓ hoặc vuốt để di chuyển.<br>Ghép hai ô cùng số để nhân đôi điểm nhé! 🍬</p>
 </div>
 
 <script>
@@ -428,6 +435,11 @@
      everything BUT the board takes up, then picks the largest app width that still
      lets the whole thing fit inside the available height (and width). */
   function fitApp(){
+    // Toggle compact desktop spacing BEFORE measuring, so chromeHeight reflects
+    // the tighter margins/padding that free up more room for the board.
+    var isDesktop = window.innerWidth >= 700;
+    document.body.classList.toggle('desktop-mode', isDesktop);
+
     var totalHeight = appEl.scrollHeight;
     var boardHeight = boardWrapEl.getBoundingClientRect().height;
     var chromeHeight = totalHeight - boardHeight;
@@ -435,7 +447,7 @@
     var cs = getComputedStyle(appEl);
     var padX = parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight);
 
-    var margin = 16;
+    var margin = 10;
     var availW = Math.max(window.innerWidth - margin * 2, 240);
     var availH = Math.max(window.innerHeight - margin * 2, 240);
 
@@ -443,11 +455,22 @@
     // chromeHeight + (appWidth - padX) <= availH  =>  appWidth <= availH - chromeHeight + padX
     var widthForHeight = availH - chromeHeight + padX;
 
-    var target = Math.min(availW, widthForHeight, 480);
+    var maxCap = isDesktop ? 900 : 480;
+
+    var target = Math.min(availW, widthForHeight, maxCap);
     target = Math.max(target, 260);
 
     appEl.style.width = target + 'px';
     appEl.style.maxWidth = target + 'px';
+
+    // Scale base font-size a touch on desktop so title/score text grows in
+    // proportion with the bigger board instead of looking undersized next to it.
+    if (isDesktop){
+      var fontScale = Math.min(Math.max(target / 440, 1), 1.35);
+      document.documentElement.style.fontSize = (16 * fontScale) + 'px';
+    } else {
+      document.documentElement.style.fontSize = '16px';
+    }
 
     measureGrid();
     repositionNoAnim();
