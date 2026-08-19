@@ -4,10 +4,10 @@ const defaultMarkdown = `# Trình soạn thảo Markdown Live
 Chào mừng bạn đến với **Markdown Live**! Đây là một ứng dụng hỗ trợ soạn thảo và xem trước nội dung Markdown trong thời gian thực.
 
 ## Các chức năng chính:
-- **Cập nhật thư viện (Update Libs)**: Tải xuống các thư viện bản mới nhất.
+- **Bảo mật XSS**: Tự động lọc sạch mã độc hại với DOMPurify.
 - **Đồng bộ cuộn (Sync Scroll)**: Cuộn song song cả 2 khung soạn thảo và xem trước.
 - **Copy**: Sao chép nhanh mã nguồn Markdown.
-- **Export PDF**: Xuất trực tiếp nội dung Preview thành định dạng PDF.
+- **Export PDF**: Xuất trực tiếp nội dung Preview thành định dạng PDF với **văn bản chọn được (Selectable Text)**.
 - **Reset**: Đưa dữ liệu về văn bản mẫu ban đầu này bất kỳ lúc nào.
 
 ---
@@ -32,7 +32,14 @@ Chào mừng bạn đến với **Markdown Live**! Đây là một ứng dụng 
 
 ---
 
-### 2. Công thức toán học (LaTeX/Math)
+### 2. Danh sách công việc (Task List)
+- [x] Tích hợp DOMPurify ngăn chặn tấn công XSS
+- [x] Cải tiến bộ tô màu cú pháp Editor (Escape, Footnote, Reference Link, Tasklist)
+- [ ] Thử nghiệm tạo tài liệu Markdown của riêng bạn
+
+---
+
+### 3. Công thức toán học (LaTeX/Math)
 - Viết cùng dòng (inline): $E = mc^2$ hoặc đường chéo tam giác $c = \\sqrt{a^2 + b^2}$.
 - Viết khối hiển thị trung tâm (block display):
 $$
@@ -41,7 +48,7 @@ $$
 
 ---
 
-### 3. Biểu đồ trực quan (Mermaid Diagrams)
+### 4. Biểu đồ trực quan (Mermaid Diagrams)
 \`\`\`mermaid
 graph TD
     A[Bắt đầu] --> B(Soạn thảo Markdown)
@@ -53,7 +60,7 @@ graph TD
 
 ---
 
-### 4. Tô màu cú pháp (Syntax Highlighting)
+### 5. Tô màu cú pháp (Syntax Highlighting)
 \`\`\`javascript
 // Một đoạn code Javascript đơn giản
 function helloWorld() {
@@ -62,15 +69,27 @@ function helloWorld() {
 helloWorld();
 \`\`\`
 
-### 5. Bảng biểu (Table)
+---
+
+### 6. Thoát ký tự (Escape), Liên kết tham chiếu
+- Thoát ký tự đặc biệt không bị format: \\*không in nghiêng\\*, \\# không phải tiêu đề.
+- Liên kết tự động (Autolink): <https://github.com> hoặc email <support@example.com>.
+- Liên kết tham chiếu: Tìm kiếm tại [Google][google-ref] hoặc đọc tài liệu [Markdown Guide][md-guide].
+
+[google-ref]: https://www.google.com "Công cụ tìm kiếm Google"
+[md-guide]: https://www.markdownguide.org "Tài liệu Markdown chính thức"
+
+---
+
+### 7. Bảng biểu (Table)
 
 | Tên công cụ | Tính năng | Trạng thái |
 | :--- | :--- | :--- |
 | Marked JS | Chuyển đổi Markdown | Đã tích hợp |
+| DOMPurify | Bảo mật XSS | Đã tích hợp |
 | Lucide | Bộ Icon tối giản | Đã tích hợp |
-| html2pdf | Xuất định dạng PDF | Đã tích hợp |
 
-### 6. Trích dẫn thông thường (Blockquote)
+### 8. Trích dẫn thông thường (Blockquote)
 > "Sự đơn giản là độ tinh tế tối thượng." — *Leonardo da Vinci*
 
 ---
@@ -189,10 +208,6 @@ function escapeHtml(str) {
 // Xử lý các cú pháp định dạng nằm trong một dòng (in đậm, in nghiêng, code, liên kết...)
 // Lưu ý: chuỗi đầu vào "text" đã được escapeHtml() từ trước
 function highlightInline(text) {
-    // Mỗi khi một quy tắc khớp và tạo ra span, ta "khóa" đoạn đó lại bằng một token
-    // tạm thời (ký tự \u0000 không thể gõ được) để các quy tắc chạy sau không quét
-    // nhầm vào bên trong span vừa tạo (ví dụ: tránh việc "**đậm**" bị quy tắc in
-    // nghiêng xử lý chồng thêm lần nữa vì nó chứa cặp dấu "*").
     const store = [];
     const protect = (html) => {
         const token = `\u0000T${store.length}\u0000`;
@@ -200,40 +215,60 @@ function highlightInline(text) {
         return token;
     };
 
+    // 0. Nhận diện các ký tự thoát (Escape characters): \* \_ \[ \] \$ \~ \# ...
+    // Bảo vệ ngay đầu tiên để không bị các regex phía sau nhận nhầm thành cú pháp định dạng
+    text = text.replace(/\\(&lt;|&gt;|&amp;|[\\`*_{}\[\]()#+\-.!~$~|^])/g, (m, char) =>
+        protect(`<span class="md-escape">\\${char}</span>`));
+
     // 1. Code inline: `code`
     text = text.replace(/(`+)([^`]+?)\1/g, (m, ticks, content) =>
         protect(`<span class="md-code-inline">${ticks}${content}${ticks}</span>`));
 
-    // 2. Ảnh: ![alt](url)
-    text = text.replace(/(!)(\[)([^\]]*)(\])(\()([^)]*)(\))/g, (m, bang, ob, alt, cb, op, url, cp) =>
-        protect(`<span class="md-link-marker">${bang}${ob}</span><span class="md-link-text">${alt}</span><span class="md-link-marker">${cb}${op}</span><span class="md-link-url">${url}</span><span class="md-link-marker">${cp}</span>`));
-
-    // 3. Liên kết: [text](url)
-    text = text.replace(/(\[)([^\]]*)(\])(\()([^)]*)(\))/g, (m, ob, t, cb, op, url, cp) =>
-        protect(`<span class="md-link-marker">${ob}</span><span class="md-link-text">${t}</span><span class="md-link-marker">${cb}${op}</span><span class="md-link-url">${url}</span><span class="md-link-marker">${cp}</span>`));
-
-    // 4. In đậm + in nghiêng: ***text*** hoặc ___text___
-    text = text.replace(/(\*\*\*|___)([^*_\n]+?)\1/g, (m, d, c) =>
-        protect(`<span class="md-bolditalic">${d}${c}${d}</span>`));
-
-    // 5. In đậm: **text** hoặc __text__
-    text = text.replace(/(\*\*|__)([^*_\n]+?)\1/g, (m, d, c) =>
-        protect(`<span class="md-bold">${d}${c}${d}</span>`));
-
-    // 6. In nghiêng: *text* hoặc _text_
-    text = text.replace(/(\*|_)([^*_\n]+?)\1/g, (m, d, c) =>
-        protect(`<span class="md-italic">${d}${c}${d}</span>`));
-
-    // 7. Gạch ngang giữa chữ: ~~text~~
-    text = text.replace(/(~~)([^~\n]+?)\1/g, (m, d, c) =>
-        protect(`<span class="md-strikethrough">${d}${c}${d}</span>`));
-
-    // 8. Công thức toán dạng inline: $...$
+    // 2. Công thức toán dạng inline: $...$
     text = text.replace(/(\$)([^$\n]+?)\1/g, (m, d, c) =>
         protect(`<span class="md-math">${d}${c}${d}</span>`));
 
-    // Khôi phục toàn bộ token đã bảo vệ. Lặp lại vì một span vừa khôi phục
-    // (ví dụ liên kết) có thể chứa token khác lồng bên trong nó (ví dụ code inline).
+    // 3. Tham chiếu Footnote: [^id]
+    text = text.replace(/(\[\^)([^\]]+?)(\])/g, (m, ob, id, cb) =>
+        protect(`<span class="md-footnote-ref"><span class="md-footnote-marker">${ob}</span><span class="md-footnote-id">${id}</span><span class="md-footnote-marker">${cb}</span></span>`));
+
+    // 4. Ảnh: ![alt](url)
+    text = text.replace(/(!)(\[)([^\]]*)(\])(\()([^)]*)(\))/g, (m, bang, ob, alt, cb, op, url, cp) =>
+        protect(`<span class="md-link-marker">${bang}${ob}</span><span class="md-link-text">${alt}</span><span class="md-link-marker">${cb}${op}</span><span class="md-link-url">${url}</span><span class="md-link-marker">${cp}</span>`));
+
+    // 5. Reference Link usage: [text][id] hoặc [text][]
+    text = text.replace(/(\[)([^\]]+?)(\])(\s*)(\[)([^\]]*?)(\])/g, (m, ob1, txt, cb1, sp, ob2, id, cb2) =>
+        protect(`<span class="md-link-marker">${ob1}</span><span class="md-link-text">${txt}</span><span class="md-link-marker">${cb1}${sp}${ob2}</span><span class="md-ref-id">${id}</span><span class="md-link-marker">${cb2}</span>`));
+
+    // 6. Liên kết thông thường: [text](url)
+    text = text.replace(/(\[)([^\]]*)(\])(\()([^)]*)(\))/g, (m, ob, t, cb, op, url, cp) =>
+        protect(`<span class="md-link-marker">${ob}</span><span class="md-link-text">${t}</span><span class="md-link-marker">${cb}${op}</span><span class="md-link-url">${url}</span><span class="md-link-marker">${cp}</span>`));
+
+    // 7. Autolinks dạng ngoặc nhọn: <https://...> hoặc <email@example.com>
+    text = text.replace(/(&lt;)(https?:\/\/[^\s&]+|mailto:[^\s&]+|[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})(&gt;)/gi, (m, ob, link, cb) =>
+        protect(`<span class="md-link-marker">${ob}</span><span class="md-autolink">${link}</span><span class="md-link-marker">${cb}</span>`));
+
+    // 8. Autolinks URL trần: https://... hoặc http://...
+    text = text.replace(/\b(https?:\/\/[^\s<>()"']+)/gi, (m, url) =>
+        protect(`<span class="md-autolink">${url}</span>`));
+
+    // 9. In đậm + in nghiêng: ***text*** hoặc ___text___
+    text = text.replace(/(\*\*\*|___)([^*_\n]+?)\1/g, (m, d, c) =>
+        protect(`<span class="md-bolditalic">${d}${c}${d}</span>`));
+
+    // 10. In đậm: **text** hoặc __text__
+    text = text.replace(/(\*\*|__)([^*_\n]+?)\1/g, (m, d, c) =>
+        protect(`<span class="md-bold">${d}${c}${d}</span>`));
+
+    // 11. In nghiêng: *text* hoặc _text_
+    text = text.replace(/(\*|_)([^*_\n]+?)\1/g, (m, d, c) =>
+        protect(`<span class="md-italic">${d}${c}${d}</span>`));
+
+    // 12. Gạch ngang giữa chữ: ~~text~~
+    text = text.replace(/(~~)([^~\n]+?)\1/g, (m, d, c) =>
+        protect(`<span class="md-strikethrough">${d}${c}${d}</span>`));
+
+    // Khôi phục toàn bộ token đã bảo vệ
     let previous;
     do {
         previous = text;
@@ -243,15 +278,29 @@ function highlightInline(text) {
     return text;
 }
 
-// Xử lý cú pháp ở cấp độ dòng (tiêu đề, trích dẫn, danh sách, gạch ngang, bảng biểu...)
+// Xử lý cú pháp ở cấp độ dòng (tiêu đề, trích dẫn, danh sách, gạch ngang, bảng biểu, footnote...)
 function highlightMarkdownLine(line) {
     // Đường kẻ ngang (Horizontal Rule): ---, ***, ___
     if (/^\s{0,3}([-*_])(?:\s*\1){2,}\s*$/.test(line)) {
         return `<span class="md-hr">${escapeHtml(line)}</span>`;
     }
 
+    // Định nghĩa Chú thích chân trang (Footnote definition): [^1]: Nội dung
+    let m = line.match(/^(\s{0,3})(\[\^)([^\]]+)(\]:)(\s*)(.*)$/);
+    if (m) {
+        const [, indent, ob, fnId, cb, space, content] = m;
+        return `${escapeHtml(indent)}<span class="md-footnote-marker">${ob}</span><span class="md-footnote-id">${escapeHtml(fnId)}</span><span class="md-footnote-marker">${cb}</span>${escapeHtml(space)}${highlightInline(escapeHtml(content))}`;
+    }
+
+    // Định nghĩa Liên kết tham chiếu (Reference link definition): [id]: url "optional title"
+    m = line.match(/^(\s{0,3})(\[)([^\]^]+)(\])(:)(\s*)(\S+)(?:(\s+)(.*))?$/);
+    if (m) {
+        const [, indent, ob, id, cb, colon, sp1, url, sp2 = '', title = ''] = m;
+        return `${escapeHtml(indent)}<span class="md-link-marker">${ob}</span><span class="md-ref-id">${escapeHtml(id)}</span><span class="md-link-marker">${cb}${colon}</span>${escapeHtml(sp1)}<span class="md-link-url">${escapeHtml(url)}</span>${escapeHtml(sp2)}${title ? `<span class="md-ref-title">${escapeHtml(title)}</span>` : ''}`;
+    }
+
     // Tiêu đề dạng ATX: #, ##, ### ...
-    let m = line.match(/^(\s{0,3})(#{1,6})(\s+)(.*)$/);
+    m = line.match(/^(\s{0,3})(#{1,6})(\s+)(.*)$/);
     if (m) {
         const [, indent, hashes, space, content] = m;
         const level = hashes.length;
@@ -271,7 +320,16 @@ function highlightMarkdownLine(line) {
         return `<span class="md-quote-marker">${escapeHtml(marker)}</span><span class="md-quote-text">${highlightInline(escapeHtml(rest))}</span>`;
     }
 
-    // Danh sách (List item): -, *, +, hoặc số thứ tự "1."
+    // Task-list (Danh sách công việc có checkbox): - [ ] hoặc - [x]
+    m = line.match(/^(\s*)([-*+]|\d+[.)])(\s+)(\[(?: |x|X)\])(\s+)(.*)$/);
+    if (m) {
+        const [, indent, marker, sp1, checkbox, sp2, content] = m;
+        const isChecked = checkbox.toLowerCase().includes('x');
+        const checkClass = isChecked ? 'md-task-checked' : 'md-task-unchecked';
+        return `${escapeHtml(indent)}<span class="md-list-marker">${escapeHtml(marker)}</span>${escapeHtml(sp1)}<span class="md-task-checkbox ${checkClass}">${escapeHtml(checkbox)}</span>${escapeHtml(sp2)}${highlightInline(escapeHtml(content))}`;
+    }
+
+    // Danh sách thông thường (List item): -, *, +, hoặc số thứ tự "1."
     m = line.match(/^(\s*)([-*+]|\d+[.)])(\s+)(.*)$/);
     if (m) {
         const [, indent, marker, space, content] = m;
@@ -320,8 +378,6 @@ function highlightMarkdown(text) {
 
 // Cập nhật lớp nền tô màu cú pháp phía sau khung soạn thảo
 function updateEditorHighlight() {
-    // Thêm một dòng trống ở cuối để đảm bảo chiều cao luôn khớp với textarea
-    // (đặc biệt khi nội dung kết thúc bằng dấu xuống dòng)
     editorHighlightCode.innerHTML = highlightMarkdown(markdownInput.value) + '\n';
 }
 
@@ -369,13 +425,9 @@ function processGFMAlerts() {
             if (match) {
                 const type = match[1].toUpperCase();
                 
-                // Loại bỏ thẻ cảnh báo khỏi nội dung đoạn văn đầu tiên
                 firstP.innerHTML = firstP.innerHTML.replace(/^\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\]\s*(?:<br\s*\/?>)?\s*/i, '');
-                
-                // Gán class style CSS
                 bq.classList.add('markdown-alert', `markdown-alert-${type.toLowerCase()}`);
                 
-                // Chèn thêm thanh tiêu đề nếu chưa tồn tại
                 if (!bq.querySelector('.markdown-alert-title')) {
                     const titleP = document.createElement('p');
                     titleP.className = 'markdown-alert-title';
@@ -387,42 +439,67 @@ function processGFMAlerts() {
     });
 }
 
-// Cập nhật kết quả Preview từ Markdown sang HTML
+// Bảo mật bổ sung cho DOMPurify: nếu nội dung Markdown chèn HTML thô có
+// thẻ <a target="...">, luôn ép rel="noopener noreferrer nofollow" để
+// chống tấn công reverse tabnabbing (trang đích can thiệp ngược qua window.opener).
+if (typeof DOMPurify !== 'undefined') {
+    DOMPurify.addHook('afterSanitizeAttributes', (node) => {
+        if (node.tagName === 'A') {
+            if (node.hasAttribute('target')) {
+                node.setAttribute('rel', 'noopener noreferrer nofollow');
+            }
+            // Chặn scheme nguy hiểm còn sót (phòng thủ theo chiều sâu, DOMPurify đã lọc mặc định)
+            const href = node.getAttribute('href') || '';
+            if (/^\s*(javascript|data|vbscript):/i.test(href)) {
+                node.removeAttribute('href');
+            }
+        }
+    });
+}
+
+// Cập nhật kết quả Preview từ Markdown sang HTML (Đảm bảo an toàn XSS)
 function renderMarkdown() {
     const rawText = markdownInput.value;
     
-    // 1. Chuyển đổi Markdown sang HTML (đã được tích hợp sẵn KaTeX thông qua extension)
-    previewOutput.innerHTML = marked.parse(rawText);
+    // 1. Chuyển đổi Markdown sang HTML
+    const dirtyHtml = marked.parse(rawText);
+
+    // 2. Bảo mật XSS: Khử độc HTML bằng DOMPurify (hỗ trợ đầy đủ MathML KaTeX và SVG Mermaid)
+    const cleanHtml = typeof DOMPurify !== 'undefined'
+        ? DOMPurify.sanitize(dirtyHtml, {
+            USE_PROFILES: { html: true, mathMl: true, svg: true },
+            ADD_ATTR: ['target', 'rel']
+        })
+        : dirtyHtml;
+
+    previewOutput.innerHTML = cleanHtml;
     charCounter.textContent = `${rawText.length} ký tự`;
 
-    // 2. Chuyển đổi các khối blockquote đặc biệt thành GFM Alerts
+    // 3. Chuyển đổi các khối blockquote đặc biệt thành GFM Alerts
     processGFMAlerts();
 
-    // 3. Tô màu mã nguồn (Syntax Highlighting) bằng Highlight.js
+    // 4. Tô màu mã nguồn (Syntax Highlighting) bằng Highlight.js
     if (typeof hljs !== 'undefined') {
         previewOutput.querySelectorAll('pre code').forEach((block) => {
-            // Không áp dụng Highlight.js trực tiếp lên khối chứa biểu đồ Mermaid
             if (!block.classList.contains('language-mermaid')) {
                 hljs.highlightElement(block);
             }
         });
     }
 
-    // 4. Xử lý các khối code Mermaid và vẽ biểu đồ
+    // 5. Xử lý các khối code Mermaid và vẽ biểu đồ
     if (typeof mermaid !== 'undefined') {
         const mermaidBlocks = previewOutput.querySelectorAll('pre code.language-mermaid');
         mermaidBlocks.forEach((block) => {
             const code = block.textContent;
             const pre = block.parentElement;
             
-            // Thay thế pre > code tiêu chuẩn bằng pre có class "mermaid"
             const newPre = document.createElement('pre');
             newPre.className = 'mermaid';
             newPre.textContent = code;
             pre.replaceWith(newPre);
         });
 
-        // Sử dụng debounce 300ms để trì hoãn vẽ biểu đồ, tránh làm nghẽn luồng nhập liệu của bàn phím
         clearTimeout(mermaidTimeout);
         mermaidTimeout = setTimeout(() => {
             const nodes = previewOutput.querySelectorAll('.mermaid');
@@ -437,7 +514,7 @@ function renderMarkdown() {
         }, 300);
     }
 
-    // 5. Cập nhật và vẽ lại tất cả icon từ Lucide (bao gồm cả các icon trong GFM Alerts)
+    // 6. Cập nhật và vẽ lại tất cả icon từ Lucide
     if (typeof lucide !== 'undefined') {
         lucide.createIcons();
     }
@@ -448,7 +525,6 @@ function loadDefaultContent() {
     markdownInput.value = defaultMarkdown;
     updateEditorHighlight();
     renderMarkdown();
-    // Đưa thanh cuộn về đầu trang
     markdownInput.scrollTop = 0;
     previewOutput.scrollTop = 0;
     editorHighlight.scrollTop = 0;
@@ -465,30 +541,28 @@ function debounce(func, delay = 300) {
     };
 }
 
-// Tạo hàm render có độ trễ 300ms
 const debouncedRender = debounce(renderMarkdown, 300);
 
 // Sự kiện nhập liệu trong Editor
 markdownInput.addEventListener('input', () => {
-    // Cập nhật số ký tự ngay lập tức để cảm giác gõ vẫn mượt
     charCounter.textContent = `${markdownInput.value.length} ký tự`;
-
-    // Tô màu cú pháp trong Editor ngay lập tức (nhẹ, không cần debounce)
     updateEditorHighlight();
-
-    // Đợi ngừng gõ 300ms mới xử lý render Markdown / KaTeX / Mermaid
     debouncedRender();
 });
 
 // Đồng bộ cuộn trang (Sync Scroll) dựa trên phần trăm vị trí cuộn
 function handleScroll(source, target) {
     if (!isSyncScrollEnabled || activeScrollSource !== source) return;
-    
-    const scrollPercentage = source.scrollTop / (source.scrollHeight - source.clientHeight);
-    target.scrollTop = scrollPercentage * (target.scrollHeight - target.clientHeight);
+
+    const sourceScrollable = source.scrollHeight - source.clientHeight;
+    // Tránh chia cho 0 (NaN) khi nội dung nguồn chưa đủ dài để cuộn
+    if (sourceScrollable <= 0) return;
+
+    const targetScrollable = target.scrollHeight - target.clientHeight;
+    const scrollPercentage = source.scrollTop / sourceScrollable;
+    target.scrollTop = scrollPercentage * Math.max(targetScrollable, 0);
 }
 
-// Bắt sự kiện di chuột (PC) và chạm tay (Điện thoại)
 markdownInput.addEventListener('mouseenter', () => activeScrollSource = markdownInput);
 previewOutput.addEventListener('mouseenter', () => activeScrollSource = previewOutput);
 
@@ -497,7 +571,6 @@ previewOutput.addEventListener('touchstart', () => activeScrollSource = previewO
 
 markdownInput.addEventListener('scroll', () => {
     handleScroll(markdownInput, previewOutput);
-    // Đồng bộ lớp nền tô màu cú pháp cuộn theo đúng vị trí của textarea
     editorHighlight.scrollTop = markdownInput.scrollTop;
     editorHighlight.scrollLeft = markdownInput.scrollLeft;
 });
@@ -526,41 +599,28 @@ btnCopy.addEventListener('click', () => {
         .catch(() => showToast("Có lỗi xảy ra khi sao chép."));
 });
 
-// Nút Xuất file PDF (Sử dụng thư viện html2pdf.js)
+// Nút Xuất file PDF với văn bản vector chọn được (Selectable Text & Searchable)
 btnPdf.addEventListener('click', () => {
-    // Tùy chỉnh thông số xuất bản PDF
-    const options = {
-        margin: [15, 15, 15, 15],
-        filename: 'markdown-live-export.pdf',
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-    };
-    
-    showToast("Đang tạo file PDF...");
-    html2pdf().set(options).from(previewOutput).save()
-        .then(() => showToast("Tải xuống PDF thành công!"))
-        .catch(() => showToast("Xuất PDF thất bại."));
+    showToast("Đang chuẩn bị trang in / xuất file PDF...");
+    setTimeout(() => {
+        window.print();
+    }, 200);
 });
 
 // Chạy khởi tạo ứng dụng khi trang web tải xong
 window.addEventListener('DOMContentLoaded', () => {
-    // Khởi tạo sơ đồ Mermaid (tắt tự động khởi chạy trên tải trang để chạy thủ công qua render)
-    // Theme của Mermaid được đồng bộ theo giao diện Sáng/Tối hiện tại của trang
     if (typeof mermaid !== 'undefined') {
         mermaid.initialize({ startOnLoad: false, theme: getCurrentTheme() === 'dark' ? 'dark' : 'default' });
     }
 
-    // Khởi tạo cấu hình tiện ích toán học cho Marked.js
     if (typeof markedKatex !== 'undefined') {
-        // Tương thích linh hoạt với cả mô hình đóng gói UMD khác nhau
         const katexExt = typeof markedKatex === 'function' ? markedKatex : markedKatex.markedKatex;
         if (katexExt) {
             marked.use(katexExt({ throwOnError: false }));
         }
     }
 
-    lucide.createIcons(); // Vẽ các icon từ Lucide
+    lucide.createIcons();
     loadDefaultContent();
 });
 

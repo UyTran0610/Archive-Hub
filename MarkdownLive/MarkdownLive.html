@@ -35,11 +35,11 @@
     <link rel="stylesheet" href="style.css"> 
     <script src="https://cdn.jsdelivr.net/npm/lucide@latest/dist/umd/lucide.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.1.6/purify.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.9.1/mermaid.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked-katex-extension@5.1.2/lib/index.umd.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 </head>
 <body>
 
@@ -62,7 +62,7 @@
                 <i data-lucide="copy"></i>
                 <span>Copy</span>
             </button>
-            <button id="btn-pdf" class="btn btn-primary" title="Xuất file PDF">
+            <button id="btn-pdf" class="btn" title="Xuất file PDF (Selectable Text)">
                 <i data-lucide="download"></i>
                 <span>Export PDF</span>
             </button>
