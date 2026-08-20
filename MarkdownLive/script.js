@@ -454,10 +454,10 @@ function processGFMAlerts() {
 // Bảo mật bổ sung cho DOMPurify
 if (typeof DOMPurify !== 'undefined') {
     DOMPurify.addHook('afterSanitizeAttributes', (node) => {
-        if (node.tagName === 'A') {
-            if (node.hasAttribute('target')) {
-                node.setAttribute('rel', 'noopener noreferrer nofollow');
-            }
+        if (node.tagName === 'A' && node.hasAttribute('href')) {
+            // Luôn mở liên kết ở tab mới để tránh điều hướng mất nội dung đang soạn thảo
+            node.setAttribute('target', '_blank');
+            node.setAttribute('rel', 'noopener noreferrer nofollow');
             const href = node.getAttribute('href') || '';
             if (/^\s*(javascript|data|vbscript):/i.test(href)) {
                 node.removeAttribute('href');
