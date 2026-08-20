@@ -1044,6 +1044,19 @@ markdownInput.addEventListener('scroll', () => {
 });
 previewOutput.addEventListener('scroll', () => handleScroll(previewOutput, markdownInput));
 
+// Đảm bảo tất cả liên kết khi nhấp vào trong vùng Preview luôn mở tab mới
+previewOutput.addEventListener('click', (e) => {
+    const link = e.target.closest('a');
+    if (link && link.getAttribute('href')) {
+        const href = link.getAttribute('href');
+        // Bỏ qua các liên kết neo nội bộ (ví dụ: #muc-luc)
+        if (!href.startsWith('#')) {
+            link.setAttribute('target', '_blank');
+            link.setAttribute('rel', 'noopener noreferrer nofollow');
+        }
+    }
+});
+
 // Nút Bật/Tắt Sync Scroll
 btnSync.addEventListener('click', () => {
     isSyncScrollEnabled = !isSyncScrollEnabled;
