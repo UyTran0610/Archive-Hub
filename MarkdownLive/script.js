@@ -224,47 +224,51 @@ function highlightInline(text) {
     text = text.replace(/(`+)([^`]+?)\1/g, (m, ticks, content) =>
         protect(`<span class="md-code-inline">${ticks}${content}${ticks}</span>`));
 
-    // 2. Công thức toán dạng inline: $...$
+    // 2. Công thức toán dạng khối trên 1 dòng: $$...$$ (đặt trước $...$)
+    text = text.replace(/(\$\$)([^$\n]+?)\1/g, (m, d, c) =>
+        protect(`<span class="md-math">${d}${c}${d}</span>`));
+
+    // 3. Công thức toán dạng inline: $...$
     text = text.replace(/(\$)([^$\n]+?)\1/g, (m, d, c) =>
         protect(`<span class="md-math">${d}${c}${d}</span>`));
 
-    // 3. Tham chiếu Footnote: [^id]
+    // 4. Tham chiếu Footnote: [^id]
     text = text.replace(/(\[\^)([^\]]+?)(\])/g, (m, ob, id, cb) =>
         protect(`<span class="md-footnote-ref"><span class="md-footnote-marker">${ob}</span><span class="md-footnote-id">${id}</span><span class="md-footnote-marker">${cb}</span></span>`));
 
-    // 4. Ảnh: ![alt](url)
+    // 5. Ảnh: ![alt](url)
     text = text.replace(/(!)(\[)([^\]]*)(\])(\()([^)]*)(\))/g, (m, bang, ob, alt, cb, op, url, cp) =>
         protect(`<span class="md-link-marker">${bang}${ob}</span><span class="md-link-text">${alt}</span><span class="md-link-marker">${cb}${op}</span><span class="md-link-url">${url}</span><span class="md-link-marker">${cp}</span>`));
 
-    // 5. Reference Link usage: [text][id] hoặc [text][]
+    // 6. Reference Link usage: [text][id] hoặc [text][]
     text = text.replace(/(\[)([^\]]+?)(\])(\s*)(\[)([^\]]*?)(\])/g, (m, ob1, txt, cb1, sp, ob2, id, cb2) =>
         protect(`<span class="md-link-marker">${ob1}</span><span class="md-link-text">${txt}</span><span class="md-link-marker">${cb1}${sp}${ob2}</span><span class="md-ref-id">${id}</span><span class="md-link-marker">${cb2}</span>`));
 
-    // 6. Liên kết thông thường: [text](url)
+    // 7. Liên kết thông thường: [text](url)
     text = text.replace(/(\[)([^\]]*)(\])(\()([^)]*)(\))/g, (m, ob, t, cb, op, url, cp) =>
         protect(`<span class="md-link-marker">${ob}</span><span class="md-link-text">${t}</span><span class="md-link-marker">${cb}${op}</span><span class="md-link-url">${url}</span><span class="md-link-marker">${cp}</span>`));
 
-    // 7. Autolinks dạng ngoặc nhọn: <https://...> hoặc <email@example.com>
+    // 8. Autolinks dạng ngoặc nhọn: <https://...> hoặc <email@example.com>
     text = text.replace(/(&lt;)(https?:\/\/[^\s&]+|mailto:[^\s&]+|[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})(&gt;)/gi, (m, ob, link, cb) =>
         protect(`<span class="md-link-marker">${ob}</span><span class="md-autolink">${link}</span><span class="md-link-marker">${cb}</span>`));
 
-    // 8. Autolinks URL trần: https://... hoặc http://...
+    // 9. Autolinks URL trần: https://... hoặc http://...
     text = text.replace(/\b(https?:\/\/[^\s<>()"']+)/gi, (m, url) =>
         protect(`<span class="md-autolink">${url}</span>`));
 
-    // 9. In đậm + in nghiêng: ***text*** hoặc ___text___
+    // 10. In đậm + in nghiêng: ***text*** hoặc ___text___
     text = text.replace(/(\*\*\*|___)([^*_\n]+?)\1/g, (m, d, c) =>
         protect(`<span class="md-bolditalic">${d}${c}${d}</span>`));
 
-    // 10. In đậm: **text** hoặc __text__
+    // 11. In đậm: **text** hoặc __text__
     text = text.replace(/(\*\*|__)([^*_\n]+?)\1/g, (m, d, c) =>
         protect(`<span class="md-bold">${d}${c}${d}</span>`));
 
-    // 11. In nghiêng: *text* hoặc _text_
+    // 12. In nghiêng: *text* hoặc _text_
     text = text.replace(/(\*|_)([^*_\n]+?)\1/g, (m, d, c) =>
         protect(`<span class="md-italic">${d}${c}${d}</span>`));
 
-    // 12. Gạch ngang giữa chữ: ~~text~~
+    // 13. Gạch ngang giữa chữ: ~~text~~
     text = text.replace(/(~~)([^~\n]+?)\1/g, (m, d, c) =>
         protect(`<span class="md-strikethrough">${d}${c}${d}</span>`));
 
@@ -346,14 +350,15 @@ function highlightMarkdownLine(line) {
     return highlightInline(escapeHtml(line));
 }
 
-// Hàm chính: quét toàn bộ nội dung Markdown, xử lý cả khối code (```...```) nhiều dòng
+// Hàm chính: quét toàn bộ nội dung Markdown, xử lý cả khối code (```...```) và khối toán ($$...$$)
 function highlightMarkdown(text) {
     const lines = text.split('\n');
     let inFence = false;
+    let inMathBlock = false; // <-- Thêm cờ theo dõi khối toán nhiều dòng
 
     const outputLines = lines.map((line) => {
+        // 1. Xử lý khối code (``` hoặc ~~~)
         const fenceMatch = line.match(/^(\s{0,3})(`{3,}|~{3,})(.*)$/);
-
         if (fenceMatch) {
             if (!inFence) {
                 inFence = true;
@@ -370,6 +375,22 @@ function highlightMarkdown(text) {
             return `<span class="md-code-block">${escapeHtml(line)}</span>`;
         }
 
+        // 2. Xử lý khối công thức toán nhiều dòng ($$ ... $$)
+        if (inMathBlock) {
+            // Kiểm tra xem dòng này có phải là dòng đóng $$ hay không
+            if (/^\s*\$\$\s*$/.test(line) || line.trim().endsWith('$$')) {
+                inMathBlock = false;
+            }
+            return `<span class="md-math">${escapeHtml(line)}</span>`;
+        }
+
+        // Kiểm tra dòng mở đầu khối toán $$ (dòng bắt đầu bằng $$ và không đóng ngay trên cùng dòng)
+        if (/^\s*\$\$/.test(line) && !/^\s*\$\$.+\$\$\s*$/.test(line)) {
+            inMathBlock = true;
+            return `<span class="md-math">${escapeHtml(line)}</span>`;
+        }
+
+        // 3. Xử lý các dòng thông thường khác
         return highlightMarkdownLine(line);
     });
 
@@ -481,12 +502,16 @@ function renderMarkdown() {
     // 4. Tô màu mã nguồn (Syntax Highlighting) bằng Highlight.js
     if (typeof hljs !== 'undefined') {
         previewOutput.querySelectorAll('pre code').forEach((block) => {
-            if (!block.classList.contains('language-mermaid')) {
+            // Kiểm tra xem người dùng có chỉ định ngôn ngữ hay không (có class dạng language-xxx)
+            const hasLanguage = Array.from(block.classList).some(cls => cls.startsWith('language-'));
+            
+            // Chỉ highlight khi có ngôn ngữ rõ ràng và không phải biểu đồ mermaid
+            if (hasLanguage && !block.classList.contains('language-mermaid')) {
                 hljs.highlightElement(block);
             }
         });
     }
-
+    
     // 5. Xử lý các khối code Mermaid và vẽ biểu đồ
     if (typeof mermaid !== 'undefined') {
         const mermaidBlocks = previewOutput.querySelectorAll('pre code.language-mermaid');
