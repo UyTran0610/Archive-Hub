@@ -206,7 +206,6 @@ function escapeHtml(str) {
 }
 
 // Xử lý các cú pháp định dạng nằm trong một dòng (in đậm, in nghiêng, code, liên kết...)
-// Lưu ý: chuỗi đầu vào "text" đã được escapeHtml() từ trước
 function highlightInline(text) {
     const store = [];
     const protect = (html) => {
@@ -215,8 +214,7 @@ function highlightInline(text) {
         return token;
     };
 
-    // 0. Nhận diện các ký tự thoát (Escape characters): \* \_ \[ \] \$ \~ \# ...
-    // Bảo vệ ngay đầu tiên để không bị các regex phía sau nhận nhầm thành cú pháp định dạng
+    // 0. Ký tự thoát (Escape characters): \* \_ \[ \] \$ \~ \# ...
     text = text.replace(/\\(&lt;|&gt;|&amp;|[\\`*_{}\[\]()#+\-.!~$~|^])/g, (m, char) =>
         protect(`<span class="md-escape">\\${char}</span>`));
 
@@ -224,7 +222,7 @@ function highlightInline(text) {
     text = text.replace(/(`+)([^`]+?)\1/g, (m, ticks, content) =>
         protect(`<span class="md-code-inline">${ticks}${content}${ticks}</span>`));
 
-    // 2. Công thức toán dạng khối trên 1 dòng: $$...$$ (đặt trước $...$)
+    // 2. Công thức toán dạng khối trên 1 dòng: $$...$$
     text = text.replace(/(\$\$)([^$\n]+?)\1/g, (m, d, c) =>
         protect(`<span class="md-math">${d}${c}${d}</span>`));
 
@@ -272,7 +270,6 @@ function highlightInline(text) {
     text = text.replace(/(~~)([^~\n]+?)\1/g, (m, d, c) =>
         protect(`<span class="md-strikethrough">${d}${c}${d}</span>`));
 
-    // Khôi phục toàn bộ token đã bảo vệ
     let previous;
     do {
         previous = text;
@@ -289,14 +286,14 @@ function highlightMarkdownLine(line) {
         return `<span class="md-hr">${escapeHtml(line)}</span>`;
     }
 
-    // Định nghĩa Chú thích chân trang (Footnote definition): [^1]: Nội dung
+    // Chú thích chân trang (Footnote definition): [^1]: Nội dung
     let m = line.match(/^(\s{0,3})(\[\^)([^\]]+)(\]:)(\s*)(.*)$/);
     if (m) {
         const [, indent, ob, fnId, cb, space, content] = m;
         return `${escapeHtml(indent)}<span class="md-footnote-marker">${ob}</span><span class="md-footnote-id">${escapeHtml(fnId)}</span><span class="md-footnote-marker">${cb}</span>${escapeHtml(space)}${highlightInline(escapeHtml(content))}`;
     }
 
-    // Định nghĩa Liên kết tham chiếu (Reference link definition): [id]: url "optional title"
+    // Liên kết tham chiếu (Reference link definition): [id]: url "optional title"
     m = line.match(/^(\s{0,3})(\[)([^\]^]+)(\])(:)(\s*)(\S+)(?:(\s+)(.*))?$/);
     if (m) {
         const [, indent, ob, id, cb, colon, sp1, url, sp2 = '', title = ''] = m;
@@ -350,14 +347,13 @@ function highlightMarkdownLine(line) {
     return highlightInline(escapeHtml(line));
 }
 
-// Hàm chính: quét toàn bộ nội dung Markdown, xử lý cả khối code (```...```) và khối toán ($$...$$)
+// Hàm quét toàn bộ nội dung Markdown, xử lý khối code (```...```) và khối toán ($$...$$)
 function highlightMarkdown(text) {
     const lines = text.split('\n');
     let inFence = false;
-    let inMathBlock = false; // <-- Thêm cờ theo dõi khối toán nhiều dòng
+    let inMathBlock = false;
 
     const outputLines = lines.map((line) => {
-        // 1. Xử lý khối code (``` hoặc ~~~)
         const fenceMatch = line.match(/^(\s{0,3})(`{3,}|~{3,})(.*)$/);
         if (fenceMatch) {
             if (!inFence) {
@@ -375,22 +371,18 @@ function highlightMarkdown(text) {
             return `<span class="md-code-block">${escapeHtml(line)}</span>`;
         }
 
-        // 2. Xử lý khối công thức toán nhiều dòng ($$ ... $$)
         if (inMathBlock) {
-            // Kiểm tra xem dòng này có phải là dòng đóng $$ hay không
             if (/^\s*\$\$\s*$/.test(line) || line.trim().endsWith('$$')) {
                 inMathBlock = false;
             }
             return `<span class="md-math">${escapeHtml(line)}</span>`;
         }
 
-        // Kiểm tra dòng mở đầu khối toán $$ (dòng bắt đầu bằng $$ và không đóng ngay trên cùng dòng)
         if (/^\s*\$\$/.test(line) && !/^\s*\$\$.+\$\$\s*$/.test(line)) {
             inMathBlock = true;
             return `<span class="md-math">${escapeHtml(line)}</span>`;
         }
 
-        // 3. Xử lý các dòng thông thường khác
         return highlightMarkdownLine(line);
     });
 
@@ -411,7 +403,7 @@ function showToast(message) {
     }, 2500);
 }
 
-// Hàm hỗ trợ lấy tên Icon Lucide cho các loại GFM Alert
+// Lấy icon Lucide cho GFM Alert
 function getAlertIcon(type) {
     switch (type) {
         case 'NOTE': return 'info';
@@ -423,7 +415,7 @@ function getAlertIcon(type) {
     }
 }
 
-// Hàm hỗ trợ lấy tiêu đề hiển thị cho GFM Alert
+// Lấy tiêu đề hiển thị cho GFM Alert
 function getAlertTitle(type) {
     switch (type) {
         case 'NOTE': return 'Note';
@@ -445,7 +437,6 @@ function processGFMAlerts() {
             
             if (match) {
                 const type = match[1].toUpperCase();
-                
                 firstP.innerHTML = firstP.innerHTML.replace(/^\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\]\s*(?:<br\s*\/?>)?\s*/i, '');
                 bq.classList.add('markdown-alert', `markdown-alert-${type.toLowerCase()}`);
                 
@@ -460,16 +451,13 @@ function processGFMAlerts() {
     });
 }
 
-// Bảo mật bổ sung cho DOMPurify: nếu nội dung Markdown chèn HTML thô có
-// thẻ <a target="...">, luôn ép rel="noopener noreferrer nofollow" để
-// chống tấn công reverse tabnabbing (trang đích can thiệp ngược qua window.opener).
+// Bảo mật bổ sung cho DOMPurify
 if (typeof DOMPurify !== 'undefined') {
     DOMPurify.addHook('afterSanitizeAttributes', (node) => {
         if (node.tagName === 'A') {
             if (node.hasAttribute('target')) {
                 node.setAttribute('rel', 'noopener noreferrer nofollow');
             }
-            // Chặn scheme nguy hiểm còn sót (phòng thủ theo chiều sâu, DOMPurify đã lọc mặc định)
             const href = node.getAttribute('href') || '';
             if (/^\s*(javascript|data|vbscript):/i.test(href)) {
                 node.removeAttribute('href');
@@ -485,7 +473,7 @@ function renderMarkdown() {
     // 1. Chuyển đổi Markdown sang HTML
     const dirtyHtml = marked.parse(rawText);
 
-    // 2. Bảo mật XSS: Khử độc HTML bằng DOMPurify (hỗ trợ đầy đủ MathML KaTeX và SVG Mermaid)
+    // 2. Bảo mật XSS: Khử độc HTML bằng DOMPurify
     const cleanHtml = typeof DOMPurify !== 'undefined'
         ? DOMPurify.sanitize(dirtyHtml, {
             USE_PROFILES: { html: true, mathMl: true, svg: true },
@@ -502,10 +490,7 @@ function renderMarkdown() {
     // 4. Tô màu mã nguồn (Syntax Highlighting) bằng Highlight.js
     if (typeof hljs !== 'undefined') {
         previewOutput.querySelectorAll('pre code').forEach((block) => {
-            // Kiểm tra xem người dùng có chỉ định ngôn ngữ hay không (có class dạng language-xxx)
             const hasLanguage = Array.from(block.classList).some(cls => cls.startsWith('language-'));
-            
-            // Chỉ highlight khi có ngôn ngữ rõ ràng và không phải biểu đồ mermaid
             if (hasLanguage && !block.classList.contains('language-mermaid')) {
                 hljs.highlightElement(block);
             }
@@ -545,9 +530,457 @@ function renderMarkdown() {
     }
 }
 
+// ==========================================================================
+// BỘ QUẢN LÝ TIỆN ÍCH & PHÍM TẮT TRÌNH SOẠN THẢO (Editor Actions & Shortcuts)
+// ==========================================================================
+const TAB_SIZE = 4;
+const TAB_SPACES = ' '.repeat(TAB_SIZE);
+
+// Quản lý lịch sử Undo / Redo cho Editor
+const editorHistory = {
+    stack: [],
+    index: -1,
+    maxSize: 150,
+    typingTimer: null,
+
+    push(val, start, end) {
+        if (this.index < this.stack.length - 1) {
+            this.stack = this.stack.slice(0, this.index + 1);
+        }
+        if (this.stack.length > 0 && this.stack[this.stack.length - 1].val === val) {
+            this.stack[this.stack.length - 1].start = start;
+            this.stack[this.stack.length - 1].end = end;
+            return;
+        }
+        this.stack.push({ val, start, end });
+        if (this.stack.length > this.maxSize) {
+            this.stack.shift();
+        } else {
+            this.index++;
+        }
+    },
+
+    saveCurrentState(el) {
+        this.push(el.value, el.selectionStart, el.selectionEnd);
+    },
+
+    undo(el) {
+        if (this.index <= 0 && this.stack.length <= 1) return;
+        // Nếu nội dung hiện tại chưa kịp lưu vào lịch sử, lưu lại trước khi lùi
+        if (this.stack[this.index] && this.stack[this.index].val !== el.value) {
+            this.push(el.value, el.selectionStart, el.selectionEnd);
+            this.index--;
+        }
+        if (this.index > 0) {
+            this.index--;
+            const state = this.stack[this.index];
+            el.value = state.val;
+            el.setSelectionRange(state.start, state.end);
+            syncEditorAfterChange();
+        }
+    },
+
+    redo(el) {
+        if (this.index < this.stack.length - 1) {
+            this.index++;
+            const state = this.stack[this.index];
+            el.value = state.val;
+            el.setSelectionRange(state.start, state.end);
+            syncEditorAfterChange();
+        }
+    }
+};
+
+// Đồng bộ giao diện sau khi thực hiện thao tác chỉnh sửa văn bản
+function syncEditorAfterChange() {
+    charCounter.textContent = `${markdownInput.value.length} ký tự`;
+    updateEditorHighlight();
+    debouncedRender();
+}
+
+// Áp dụng thay đổi văn bản và ghi nhận trạng thái vào lịch sử
+function applyEditorChange(newText, newStart, newEnd) {
+    editorHistory.saveCurrentState(markdownInput);
+    markdownInput.value = newText;
+    markdownInput.setSelectionRange(newStart, newEnd !== undefined ? newEnd : newStart);
+    editorHistory.saveCurrentState(markdownInput);
+    syncEditorAfterChange();
+}
+
+// Xử lý phím Tab và Shift + Tab (Thụt lề / Hủy thụt lề)
+function handleEditorTab(e) {
+    e.preventDefault();
+    const val = markdownInput.value;
+    const selStart = markdownInput.selectionStart;
+    const selEnd = markdownInput.selectionEnd;
+
+    // Trường hợp con trỏ đơn, không chọn nhiều dòng và không ấn Shift: chèn 4 khoảng trắng
+    if (selStart === selEnd && !e.shiftKey) {
+        const newText = val.substring(0, selStart) + TAB_SPACES + val.substring(selEnd);
+        applyEditorChange(newText, selStart + TAB_SIZE, selStart + TAB_SIZE);
+        return;
+    }
+
+    // Trường hợp bôi đen nhiều dòng hoặc Shift + Tab
+    const lineStart = val.lastIndexOf('\n', selStart - 1) + 1;
+    let lineEnd = val.indexOf('\n', selEnd);
+    if (lineEnd === -1) lineEnd = val.length;
+
+    const selectedBlock = val.substring(lineStart, lineEnd);
+    const lines = selectedBlock.split('\n');
+
+    let firstLineDelta = 0;
+    let totalDelta = 0;
+    const newLines = lines.map((line, idx) => {
+        let delta = 0;
+        let newLine = line;
+
+        if (!e.shiftKey) {
+            // Thụt lề vào trong
+            newLine = TAB_SPACES + line;
+            delta = TAB_SIZE;
+        } else {
+            // Hủy thụt lề ra ngoài
+            if (line.startsWith(TAB_SPACES)) {
+                newLine = line.substring(TAB_SIZE);
+                delta = -TAB_SIZE;
+            } else if (line.startsWith('\t')) {
+                newLine = line.substring(1);
+                delta = -1;
+            } else {
+                const spaces = line.match(/^ {1,4}/);
+                if (spaces) {
+                    newLine = line.substring(spaces[0].length);
+                    delta = -spaces[0].length;
+                }
+            }
+        }
+
+        if (idx === 0) firstLineDelta = delta;
+        totalDelta += delta;
+        return newLine;
+    });
+
+    const replacedText = newLines.join('\n');
+    const newText = val.substring(0, lineStart) + replacedText + val.substring(lineEnd);
+    const newSelStart = Math.max(lineStart, selStart + (selStart > lineStart ? firstLineDelta : 0));
+    const newSelEnd = Math.max(newSelStart, selEnd + totalDelta);
+
+    applyEditorChange(newText, newSelStart, newSelEnd);
+}
+
+// Xử lý phím Enter thông minh (Auto-indent & Tự động tiếp tục danh sách)
+function handleEditorEnter(e) {
+    const val = markdownInput.value;
+    const selStart = markdownInput.selectionStart;
+    const selEnd = markdownInput.selectionEnd;
+
+    const lineStart = val.lastIndexOf('\n', selStart - 1) + 1;
+    const currentLine = val.substring(lineStart, selStart);
+
+    // 1. Kiểm tra trường hợp dòng danh sách rỗng (người dùng muốn thoát khỏi danh sách)
+    const emptyTaskMatch = currentLine.match(/^(\s*[-*+]\s+\[[ xX]\]\s*)$/);
+    const emptyUlMatch = currentLine.match(/^(\s*[-*+]\s*)$/);
+    const emptyOlMatch = currentLine.match(/^(\s*\d+[.)]\s*)$/);
+    const emptyBqMatch = currentLine.match(/^(\s*>+\s*)$/);
+
+    if (emptyTaskMatch || emptyUlMatch || emptyOlMatch || emptyBqMatch) {
+        e.preventDefault();
+        const newText = val.substring(0, lineStart) + val.substring(selEnd);
+        applyEditorChange(newText, lineStart, lineStart);
+        return;
+    }
+
+    // 2. Danh sách công việc (Task list): - [ ] hoặc - [x]
+    const taskMatch = currentLine.match(/^(\s*)([-*+]|\d+[.)])(\s+\[[ xX]\]\s+)(.*)$/);
+    if (taskMatch) {
+        e.preventDefault();
+        const [, indent, bullet, marker] = taskMatch;
+        const cleanMarker = marker.replace(/\[[xX]\]/, '[ ]');
+        const insert = '\n' + indent + bullet + cleanMarker;
+        const newText = val.substring(0, selStart) + insert + val.substring(selEnd);
+        applyEditorChange(newText, selStart + insert.length, selStart + insert.length);
+        return;
+    }
+
+    // 3. Danh sách không thứ tự (Unordered list): -, *, +
+    const ulMatch = currentLine.match(/^(\s*)([-*+]\s+)(.*)$/);
+    if (ulMatch) {
+        e.preventDefault();
+        const [, indent, marker] = ulMatch;
+        const insert = '\n' + indent + marker;
+        const newText = val.substring(0, selStart) + insert + val.substring(selEnd);
+        applyEditorChange(newText, selStart + insert.length, selStart + insert.length);
+        return;
+    }
+
+    // 4. Danh sách có thứ tự (Ordered list): 1. , 2)
+    const olMatch = currentLine.match(/^(\s*)(\d+)([.)]\s+)(.*)$/);
+    if (olMatch) {
+        e.preventDefault();
+        const [, indent, num, delim] = olMatch;
+        const nextNum = parseInt(num, 10) + 1;
+        const insert = '\n' + indent + nextNum + delim;
+        const newText = val.substring(0, selStart) + insert + val.substring(selEnd);
+        applyEditorChange(newText, selStart + insert.length, selStart + insert.length);
+        return;
+    }
+
+    // 5. Trích dẫn (Blockquote): >
+    const bqMatch = currentLine.match(/^(\s*>+\s*)(.*)$/);
+    if (bqMatch) {
+        e.preventDefault();
+        const insert = '\n' + bqMatch[1];
+        const newText = val.substring(0, selStart) + insert + val.substring(selEnd);
+        applyEditorChange(newText, selStart + insert.length, selStart + insert.length);
+        return;
+    }
+
+    // 6. Giữ nguyên độ thụt lề của dòng hiện tại (Auto indentation)
+    const indentMatch = currentLine.match(/^(\s+)/);
+    if (indentMatch) {
+        e.preventDefault();
+        const insert = '\n' + indentMatch[1];
+        const newText = val.substring(0, selStart) + insert + val.substring(selEnd);
+        applyEditorChange(newText, selStart + insert.length, selStart + insert.length);
+    }
+}
+
+// Bọc hoặc hủy bọc đoạn văn bản bằng ký hiệu Markdown (Bold, Italic, Code, Strikethrough...)
+function wrapOrToggleFormat(wrapper, placeholder = '') {
+    const val = markdownInput.value;
+    const selStart = markdownInput.selectionStart;
+    const selEnd = markdownInput.selectionEnd;
+    const selected = val.substring(selStart, selEnd);
+    const wLen = wrapper.length;
+
+    // Kiểm tra nếu nội dung đang chọn đã được bọc bởi wrapper
+    if (selected.length >= 2 * wLen && selected.startsWith(wrapper) && selected.endsWith(wrapper)) {
+        const unwrapped = selected.substring(wLen, selected.length - wLen);
+        const newText = val.substring(0, selStart) + unwrapped + val.substring(selEnd);
+        applyEditorChange(newText, selStart, selStart + unwrapped.length);
+        return;
+    }
+
+    // Kiểm tra nếu wrapper nằm ngay bên ngoài phạm vi đang chọn
+    if (selStart >= wLen && selEnd + wLen <= val.length) {
+        const before = val.substring(selStart - wLen, selStart);
+        const after = val.substring(selEnd, selEnd + wLen);
+        if (before === wrapper && after === wrapper) {
+            const newText = val.substring(0, selStart - wLen) + selected + val.substring(selEnd + wLen);
+            applyEditorChange(newText, selStart - wLen, selStart - wLen + selected.length);
+            return;
+        }
+    }
+
+    // Bọc mới
+    if (selStart === selEnd) {
+        const insert = wrapper + placeholder + wrapper;
+        const newText = val.substring(0, selStart) + insert + val.substring(selEnd);
+        const newPos = selStart + wLen + (placeholder ? placeholder.length : 0);
+        applyEditorChange(newText, selStart + wLen, newPos);
+    } else {
+        const insert = wrapper + selected + wrapper;
+        const newText = val.substring(0, selStart) + insert + val.substring(selEnd);
+        applyEditorChange(newText, selStart + wLen, selStart + wLen + selected.length);
+    }
+}
+
+// Chèn hoặc bọc liên kết (Link)
+function handleEditorLink() {
+    const val = markdownInput.value;
+    const selStart = markdownInput.selectionStart;
+    const selEnd = markdownInput.selectionEnd;
+    const selected = val.substring(selStart, selEnd);
+
+    if (selStart === selEnd) {
+        const insert = '[liên kết](url)';
+        const newText = val.substring(0, selStart) + insert + val.substring(selEnd);
+        // Bôi đen sẵn chữ "url" để người dùng dán link vào
+        applyEditorChange(newText, selStart + 10, selStart + 13);
+    } else {
+        const insert = `[${selected}](url)`;
+        const newText = val.substring(0, selStart) + insert + val.substring(selEnd);
+        const urlStart = selStart + selected.length + 3;
+        applyEditorChange(newText, urlStart, urlStart + 3);
+    }
+}
+
+// Nhân bản dòng hiện tại hoặc đoạn văn bản đang chọn (Duplicate line / selection)
+function handleEditorDuplicate() {
+    const val = markdownInput.value;
+    const selStart = markdownInput.selectionStart;
+    const selEnd = markdownInput.selectionEnd;
+
+    if (selStart !== selEnd) {
+        const selected = val.substring(selStart, selEnd);
+        const newText = val.substring(0, selEnd) + selected + val.substring(selEnd);
+        applyEditorChange(newText, selEnd, selEnd + selected.length);
+    } else {
+        const lineStart = val.lastIndexOf('\n', selStart - 1) + 1;
+        let lineEnd = val.indexOf('\n', selStart);
+        if (lineEnd === -1) lineEnd = val.length;
+
+        const currentLine = val.substring(lineStart, lineEnd);
+        const insert = '\n' + currentLine;
+        const newText = val.substring(0, lineEnd) + insert + val.substring(lineEnd);
+        const offset = selStart - lineStart;
+        applyEditorChange(newText, lineEnd + 1 + offset, lineEnd + 1 + offset);
+    }
+}
+
+// Lắng nghe sự kiện bàn phím trên khung soạn thảo
+markdownInput.addEventListener('keydown', (e) => {
+    const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+    const isCmdOrCtrl = isMac ? e.metaKey : e.ctrlKey;
+    const key = e.key;
+
+    // 1. Phím tắt có Ctrl / Cmd
+    if (isCmdOrCtrl) {
+        const lowerKey = key.toLowerCase();
+
+        // Undo: Ctrl+Z
+        if (lowerKey === 'z' && !e.shiftKey) {
+            e.preventDefault();
+            editorHistory.undo(markdownInput);
+            return;
+        }
+
+        // Redo: Ctrl+Y hoặc Ctrl+Shift+Z
+        if (lowerKey === 'y' || (lowerKey === 'z' && e.shiftKey)) {
+            e.preventDefault();
+            editorHistory.redo(markdownInput);
+            return;
+        }
+
+        // Bold: Ctrl+B
+        if (lowerKey === 'b') {
+            e.preventDefault();
+            wrapOrToggleFormat('**');
+            return;
+        }
+
+        // Italic: Ctrl+I
+        if (lowerKey === 'i') {
+            e.preventDefault();
+            wrapOrToggleFormat('*');
+            return;
+        }
+
+        // Link: Ctrl+K
+        if (lowerKey === 'k') {
+            e.preventDefault();
+            handleEditorLink();
+            return;
+        }
+
+        // Inline Code: Ctrl+E hoặc Ctrl+`
+        if (lowerKey === 'e' || key === '`') {
+            e.preventDefault();
+            wrapOrToggleFormat('`');
+            return;
+        }
+
+        // Strikethrough: Ctrl+Shift+X
+        if (e.shiftKey && lowerKey === 'x') {
+            e.preventDefault();
+            wrapOrToggleFormat('~~');
+            return;
+        }
+
+        // Duplicate line/selection: Ctrl+D
+        if (lowerKey === 'd') {
+            e.preventDefault();
+            handleEditorDuplicate();
+            return;
+        }
+    }
+
+    // 2. Phím Tab & Shift + Tab
+    if (key === 'Tab') {
+        handleEditorTab(e);
+        return;
+    }
+
+    // 3. Phím Enter
+    if (key === 'Enter' && !e.shiftKey && !e.altKey && !isCmdOrCtrl) {
+        handleEditorEnter(e);
+        return;
+    }
+
+    const val = markdownInput.value;
+    const selStart = markdownInput.selectionStart;
+    const selEnd = markdownInput.selectionEnd;
+
+    // 4. Tự động bao bọc vùng chọn khi gõ ký tự mở / ký hiệu Markdown
+    const wrapPairs = {
+        '(': ')',
+        '[': ']',
+        '{': '}',
+        '"': '"',
+        "'": "'",
+        '`': '`',
+        '*': '*',
+        '_': '_',
+        '~': '~',
+        '$': '$'
+    };
+
+    if (selStart !== selEnd && wrapPairs[key]) {
+        e.preventDefault();
+        const openChar = key;
+        const closeChar = wrapPairs[key];
+        const selected = val.substring(selStart, selEnd);
+        const newText = val.substring(0, selStart) + openChar + selected + closeChar + val.substring(selEnd);
+        applyEditorChange(newText, selStart + 1, selEnd + 1);
+        return;
+    }
+
+    // 5. Tự động đóng cặp ngoặc & nháy khi con trỏ không bôi đen
+    const autoClosePairs = {
+        '(': ')',
+        '[': ']',
+        '{': '}',
+        '"': '"',
+        "'": "'",
+        '`': '`'
+    };
+
+    if (selStart === selEnd && autoClosePairs[key]) {
+        e.preventDefault();
+        const openChar = key;
+        const closeChar = autoClosePairs[key];
+        const newText = val.substring(0, selStart) + openChar + closeChar + val.substring(selEnd);
+        applyEditorChange(newText, selStart + 1, selStart + 1);
+        return;
+    }
+
+    // 6. Bỏ qua ký tự đóng nếu con trỏ đang đứng trước nó
+    const closers = [')', ']', '}', '"', "'", '`'];
+    if (selStart === selEnd && closers.includes(key) && selStart < val.length && val[selStart] === key) {
+        e.preventDefault();
+        markdownInput.setSelectionRange(selStart + 1, selStart + 1);
+        return;
+    }
+
+    // 7. Xóa cả cặp ngoặc khi nhấn Backspace giữa cặp ngoặc rỗng
+    if (key === 'Backspace' && selStart === selEnd && selStart > 0 && selStart < val.length) {
+        const charBefore = val[selStart - 1];
+        const charAfter = val[selStart];
+        if (autoClosePairs[charBefore] === charAfter) {
+            e.preventDefault();
+            const newText = val.substring(0, selStart - 1) + val.substring(selStart + 1);
+            applyEditorChange(newText, selStart - 1, selStart - 1);
+        }
+    }
+});
+
 // Hàm gán lại dữ liệu mặc định
 function loadDefaultContent() {
     markdownInput.value = defaultMarkdown;
+    editorHistory.stack = [];
+    editorHistory.index = -1;
+    editorHistory.saveCurrentState(markdownInput);
     updateEditorHighlight();
     renderMarkdown();
     markdownInput.scrollTop = 0;
@@ -569,10 +1002,21 @@ function debounce(func, delay = 300) {
 const debouncedRender = debounce(renderMarkdown, 300);
 
 // Sự kiện nhập liệu trong Editor
-markdownInput.addEventListener('input', () => {
+markdownInput.addEventListener('input', (e) => {
     charCounter.textContent = `${markdownInput.value.length} ký tự`;
     updateEditorHighlight();
     debouncedRender();
+
+    // Tự động lưu snapshot vào lịch sử Undo/Redo khi người dùng gõ
+    clearTimeout(editorHistory.typingTimer);
+    const inputType = e.inputType || '';
+    if (inputType.includes('Space') || inputType.includes('Line') || inputType.includes('history')) {
+        editorHistory.saveCurrentState(markdownInput);
+    } else {
+        editorHistory.typingTimer = setTimeout(() => {
+            editorHistory.saveCurrentState(markdownInput);
+        }, 400);
+    }
 });
 
 // Đồng bộ cuộn trang (Sync Scroll) dựa trên phần trăm vị trí cuộn
@@ -580,7 +1024,6 @@ function handleScroll(source, target) {
     if (!isSyncScrollEnabled || activeScrollSource !== source) return;
 
     const sourceScrollable = source.scrollHeight - source.clientHeight;
-    // Tránh chia cho 0 (NaN) khi nội dung nguồn chưa đủ dài để cuộn
     if (sourceScrollable <= 0) return;
 
     const targetScrollable = target.scrollHeight - target.clientHeight;
