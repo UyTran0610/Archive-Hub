@@ -455,12 +455,18 @@ function processGFMAlerts() {
 if (typeof DOMPurify !== 'undefined') {
     DOMPurify.addHook('afterSanitizeAttributes', (node) => {
         if (node.tagName === 'A' && node.hasAttribute('href')) {
-            // Luôn mở liên kết ở tab mới để tránh điều hướng mất nội dung đang soạn thảo
-            node.setAttribute('target', '_blank');
-            node.setAttribute('rel', 'noopener noreferrer nofollow');
             const href = node.getAttribute('href') || '';
             if (/^\s*(javascript|data|vbscript):/i.test(href)) {
                 node.removeAttribute('href');
+                return;
+            }
+            // Chỉ mở tab mới với liên kết ra ngoài; liên kết neo nội bộ (#muc-luc) giữ nguyên trong tab hiện tại
+            if (href.startsWith('#')) {
+                node.removeAttribute('target');
+                node.removeAttribute('rel');
+            } else {
+                node.setAttribute('target', '_blank');
+                node.setAttribute('rel', 'noopener noreferrer nofollow');
             }
         }
     });

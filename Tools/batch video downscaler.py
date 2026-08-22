@@ -1,11 +1,14 @@
 #!/usr/bin/env python3
 """
-Video Batch Downscale 1080p/4K → 720p
-Requires: ffmpeg installed on system
+Video Batch Downscale — chuyển đổi hàng loạt video sang độ phân giải bạn chọn
+Requires: ffmpeg + ffprobe installed on system
+
+Script sẽ tự động quét video trong CHÍNH thư mục chứa file .py này (không quét subfolder).
 """
 
 import os
 import sys
+import json
 import time
 import signal
 import subprocess
@@ -16,15 +19,23 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 # ──────────────────────────────────────────────
 #  CONFIG  (chỉnh tùy ý)
 # ──────────────────────────────────────────────
-MAX_WORKERS   = 1           # veryslow dùng ~100% CPU/video → mặc định 1 worker (Chỉ tăng nếu dùng preset fast/medium)
-OUTPUT_SUFFIX = "_720p"     # Hậu tố thêm vào tên file output
-OUTPUT_EXT    = ".mp4"      # Định dạng output
-CRF           = 20          # Chất lượng: 18 (cao) → 28 (thấp), 23 = cân bằng tốt
-PRESET        = "slow"  # Tốc độ encode: ultrafast/fast/medium/slow/veryslow (⚠ veryslow + MAX_WORKERS>1 sẽ phản tác dụng)
-AUDIO_BITRATE = "128k"      # Bitrate audio output
-VIDEO_CODEC   = "libx264"   # Codec: libx264 (phổ biến) (libx265 nhỏ hơn ~40%, cần thêm -tag:v hvc1 cho iOS/macOS)
-FFMPEG_TIMEOUT = 3600       # Timeout mỗi video (giây) — tránh treo vô thời hạn
-MIN_OUTPUT_SIZE = 1024      # Byte tối thiểu của file output hợp lệ
+MAX_WORKERS      = 1           # veryslow dùng ~100% CPU/video → mặc định 1 worker (Chỉ tăng nếu dùng preset fast/medium)
+OUTPUT_EXT       = ".mp4"      # Định dạng output
+CRF              = 20          # Chất lượng: 18 (cao) → 28 (thấp), 23 = cân bằng tốt
+PRESET           = "slow"      # Tốc độ encode: ultrafast/fast/medium/slow/veryslow (⚠ veryslow + MAX_WORKERS>1 sẽ phản tác dụng)
+AUDIO_BITRATE    = "128k"      # Bitrate audio output
+VIDEO_CODEC      = "libx264"   # Codec: libx264 (phổ biến) (libx265 nhỏ hơn ~40%, cần thêm -tag:v hvc1 cho iOS/macOS)
+FFMPEG_TIMEOUT   = 3600        # Timeout mỗi video (giây) — tránh treo vô thời hạn
+MIN_OUTPUT_SIZE  = 1024        # Byte tối thiểu của file output hợp lệ
+
+RESOLUTION_PRESETS = {         # menu chọn độ phân giải đầu ra (cạnh ngắn, theo chiều dọc)
+    "1": 480,
+    "2": 720,
+    "3": 1080,
+    "4": 1440,
+}
+
+VIDEO_EXTS = {".mp4", ".mkv", ".mov", ".avi", ".wmv", ".flv", ".webm", ".m4v"}
 
 # ──────────────────────────────────────────────
 #  ANSI COLORS
@@ -58,8 +69,8 @@ def _cleanup_and_exit(sig, frame):
                 try:
                     p.unlink()
                     print(f"  {R}✗ Đã xóa file dở:{RST} {p.name}")
-                except OSError:
-                    pass
+                except OSError as e:
+                    print(f"  {R}✗ Không xóa được {p.name}: {e}{RST}")
     print(f"{Y}Đã dọn xong. Thoát.{RST}\n")
     sys.exit(1)
 
@@ -73,89 +84,198 @@ signal.signal(signal.SIGTERM, _cleanup_and_exit)
 def banner():
     print(f"""
 {C}╔══════════════════════════════════════════════════════╗
-║  {BOLD}{W}🎬  VIDEO BATCH CONVERTER  ·  1080p/4K → 720p{RST}{C}       ║
-║  {DIM}FFmpeg · H.264 · CRF {CRF} · {PRESET}{RST}{C}                       ║
+║  {BOLD}{W}🎬  VIDEO BATCH DOWNSCALER{RST}{C}                          ║
+║  {DIM}FFmpeg · H.264 · CRF {CRF} · {PRESET}{RST}{C}                      ║
 ╚══════════════════════════════════════════════════════╝{RST}
 """)
 
 def human_size(path: Path) -> str:
-    b = path.stat().st_size
+    """Trả về kích thước file dạng dễ đọc. Trả về '?' nếu không đọc được."""
+    try:
+        b = path.stat().st_size
+    except OSError:
+        return "?"
     for unit in ("KB", "MB", "GB"):
         b /= 1024
         if b < 1024:
             return f"{b:.1f} {unit}"
     return f"{b:.1f} GB"
 
-def check_ffmpeg():
-    try:
-        subprocess.run(["ffmpeg", "-version"], capture_output=True, check=True)
-        return True
-    except (FileNotFoundError, subprocess.CalledProcessError):
+def check_ffmpeg() -> bool:
+    """Kiểm tra ffmpeg VÀ ffprobe (script cần cả hai). In rõ cái nào thiếu."""
+    missing = []
+    for tool in ("ffmpeg", "ffprobe"):
+        try:
+            subprocess.run([tool, "-version"], capture_output=True, check=True, timeout=10)
+        except FileNotFoundError:
+            missing.append(tool)
+        except subprocess.CalledProcessError:
+            missing.append(f"{tool} (lỗi khi chạy)")
+        except subprocess.TimeoutExpired:
+            missing.append(f"{tool} (timeout)")
+    if missing:
+        print(f"{R}✗ Thiếu: {', '.join(missing)}{RST}")
         return False
+    return True
 
 def get_video_resolution(path: Path):
-    """Trả về (width, height) hoặc (0,0) nếu lỗi."""
+    """Trả về (width, height) THEO HƯỚNG HIỂN THỊ THỰC TẾ, hoặc (0, 0) nếu không đọc được
+    (file lỗi/không phải video).
+
+    Lưu ý quan trọng: video quay dọc bằng điện thoại (iPhone/Android) thường được MÃ HÓA
+    ở dạng ngang (vd 1920×1080) kèm metadata xoay 90°/270° (rotate tag hoặc display matrix),
+    trình phát/ffmpeg sẽ tự xoay lại khi hiển thị hoặc khi encode lại (autorotate mặc định
+    bật). Nếu chỉ đọc width/height gốc, ta sẽ nhầm video dọc thành video ngang và chọn sai
+    hướng scale khi convert. Hàm này đọc thêm góc xoay (side_data displaymatrix hoặc tag
+    rotate cũ) và hoán đổi width/height cho khớp với khung hình thật sự sẽ được xử lý.
+    """
     cmd = [
         "ffprobe", "-v", "error",
         "-select_streams", "v:0",
-        "-show_entries", "stream=width,height",
-        "-of", "csv=p=0",
+        "-show_entries", "stream=width,height:stream_tags=rotate:stream_side_data=rotation",
+        "-of", "json",
         str(path)
     ]
     try:
-        out = subprocess.check_output(cmd, stderr=subprocess.DEVNULL, timeout=30).decode().strip()
-        w, h = out.split(",")
-        return int(w), int(h)
-    except Exception:
+        out = subprocess.check_output(cmd, stderr=subprocess.DEVNULL, timeout=30)
+        info = json.loads(out)
+        streams = info.get("streams") or []
+        if not streams:
+            return 0, 0
+        s = streams[0]
+        w = int(s.get("width") or 0)
+        h = int(s.get("height") or 0)
+        if not w or not h:
+            return 0, 0
+
+        # Ưu tiên góc xoay từ side_data (displaymatrix) — cách hiện đại, đáng tin cậy nhất.
+        rotation = 0
+        for sd in (s.get("side_data_list") or []):
+            if "rotation" in sd:
+                try:
+                    rotation = round(float(sd["rotation"]))
+                except (ValueError, TypeError):
+                    rotation = 0
+                break
+        else:
+            # Fallback: tag "rotate" kiểu cũ (một số file/thiết bị đời cũ chỉ có tag này)
+            tag_rotate = (s.get("tags") or {}).get("rotate")
+            if tag_rotate is not None:
+                try:
+                    rotation = round(float(tag_rotate))
+                except (ValueError, TypeError):
+                    rotation = 0
+
+        # Chuẩn hóa về 0-359 (xử lý cả góc âm như -90), chỉ hoán đổi khi xoay 1/4 vòng
+        # (90°/270°) — xoay 180° không đổi hướng ngang/dọc nên không cần hoán đổi.
+        rotation = rotation % 360
+        if rotation in (90, 270):
+            w, h = h, w
+
+        return w, h
+    except (subprocess.CalledProcessError, subprocess.TimeoutExpired,
+            ValueError, TypeError, FileNotFoundError, OSError,
+            json.JSONDecodeError, KeyError, IndexError):
         return 0, 0
 
-def collect_videos(folder: Path, recursive: bool = False) -> list[Path]:
-    """Scan video files. recursive=True để quét cả subfolder."""
-    exts = {".mp4", ".mkv", ".mov", ".avi", ".wmv", ".flv", ".webm", ".m4v"}
-    if recursive:
-        return sorted(p for p in folder.rglob("*")
-                      if p.is_file() and p.suffix.lower() in exts)
-    return sorted(p for p in folder.iterdir()
-                  if p.is_file() and p.suffix.lower() in exts)
+def collect_videos(folder: Path) -> list[Path]:
+    """Quét video ngay trong `folder` (không quét subfolder)."""
+    try:
+        entries = list(folder.iterdir())
+    except OSError as e:
+        print(f"{R}✗ Không đọc được thư mục {folder}: {e}{RST}")
+        return []
+    return sorted(p for p in entries if p.is_file() and p.suffix.lower() in VIDEO_EXTS)
 
 def is_partial_output(path: Path) -> bool:
     """Kiểm tra file có phải output dở (từ lần chạy bị ngắt trước) không."""
-    return path.exists() and path.stat().st_size < MIN_OUTPUT_SIZE
+    try:
+        return path.exists() and path.stat().st_size < MIN_OUTPUT_SIZE
+    except OSError:
+        return False
+
+def choose_resolution() -> int:
+    """Hỏi người dùng độ phân giải đầu ra. Trả về chiều cao (px) của cạnh ngắn mục tiêu."""
+    print(f"{W}🎯 Chọn độ phân giải đầu ra:{RST}")
+    for key, val in RESOLUTION_PRESETS.items():
+        print(f"   {C}{key}{RST}) {val}p")
+    print(f"   {C}5{RST}) Tùy chỉnh…")
+
+    while True:
+        choice = input(f"{W}→ Lựa chọn {DIM}[Enter = 720p]{RST}: ").strip()
+        if choice == "":
+            return 720
+        if choice in RESOLUTION_PRESETS:
+            return RESOLUTION_PRESETS[choice]
+        if choice == "5":
+            while True:
+                custom = input(f"{W}  Nhập chiều cao mong muốn (px, vd 540): {RST}").strip()
+                if custom.isdigit() and int(custom) > 0:
+                    return int(custom)
+                print(f"  {R}✗ Giá trị không hợp lệ, nhập số nguyên dương.{RST}")
+            # unreachable
+        print(f"  {R}✗ Lựa chọn không hợp lệ, thử lại.{RST}")
 
 # ──────────────────────────────────────────────
 #  CORE CONVERTER
 # ──────────────────────────────────────────────
 
-def convert_video(src: Path, out_dir: Path, idx: int, total: int) -> dict:
+def convert_video(src: Path, out_dir: Path, target_height: int, idx: int, total: int,
+                   resolution: tuple[int, int]) -> dict:
     stem = src.stem
-    dst  = out_dir / f"{stem}{OUTPUT_SUFFIX}{OUTPUT_EXT}"
+    suffix = f"_{target_height}p"
+    dst = out_dir / f"{stem}{suffix}{OUTPUT_EXT}"
 
     # Bỏ qua nếu đã convert thành công (file hợp lệ, không phải file dở)
     if dst.exists():
         if is_partial_output(dst):
             with LOCK:
                 print(f"  {Y}[RETRY]{RST} {stem} — file dở từ lần trước, convert lại")
-            dst.unlink()
+            try:
+                dst.unlink()
+            except OSError as e:
+                with LOCK:
+                    print(f"  {R}✗ Không xóa được file dở {dst.name}: {e}{RST}")
+                return {"src": src, "dst": dst, "status": "error", "error": f"Không xóa được file dở: {e}"}
         else:
             with LOCK:
                 print(f"  {Y}[SKIP]{RST} {stem} — đã tồn tại ({human_size(dst)})")
             return {"src": src, "dst": dst, "status": "skipped"}
 
-    src_size = src.stat().st_size
-    w, h = get_video_resolution(src)
-    res_tag = f"{w}×{h}" if w else "unknown"
+    # Kiểm tra file nguồn hợp lệ trước khi động vào ffmpeg
+    try:
+        src_size = src.stat().st_size
+    except OSError as e:
+        with LOCK:
+            print(f"    {R}✗ Lỗi:{RST} Không đọc được file nguồn ({e})")
+        return {"src": src, "dst": dst, "status": "error", "error": f"Không đọc được file nguồn: {e}"}
+
+    if src_size == 0:
+        with LOCK:
+            print(f"    {R}✗ Lỗi:{RST} File nguồn rỗng (0 byte)")
+        return {"src": src, "dst": dst, "status": "error", "error": "File nguồn rỗng (0 byte)"}
+
+    w, h = resolution
+    res_tag = f"{w}×{h}" if w and h else "unknown"
 
     with LOCK:
         print(f"  {B}[{idx:02d}/{total:02d}]{RST} {W}{stem}{RST}  {DIM}({res_tag}, {human_size(src)}){RST}")
 
+    if not w or not h:
+        with LOCK:
+            print(f"    {R}✗ Lỗi:{RST} Không đọc được độ phân giải — file có thể hỏng hoặc không phải video")
+        return {"src": src, "dst": dst, "status": "error",
+                "error": "Không đọc được độ phân giải (file hỏng hoặc không phải video)"}
+
     # Xác định cạnh ngắn để scale đúng cho cả video ngang lẫn dọc
-    short_side = min(w, h) if w and h else h
-    if short_side > 720:
+    short_side = min(w, h)
+    if short_side > target_height:
         if w <= h:
-            scale_filter = "scale=720:-2"   # portrait / dọc
+            scale_filter = f"scale={target_height}:-2"   # portrait / dọc
         else:
-            scale_filter = "scale=-2:720"   # landscape / ngang
+            scale_filter = f"scale=-2:{target_height}"   # landscape / ngang
     else:
+        # Đã ≤ độ phân giải mục tiêu → chỉ ép kích thước chẵn, không upscale
         scale_filter = "scale=trunc(iw/2)*2:trunc(ih/2)*2"
 
     cmd = [
@@ -182,31 +302,57 @@ def convert_video(src: Path, out_dir: Path, idx: int, total: int) -> dict:
         elapsed = time.time() - t0
 
         # Validate output — ffmpeg đôi khi exit 0 nhưng file rỗng/corrupt
-        if not dst.exists() or dst.stat().st_size < MIN_OUTPUT_SIZE:
-            raise ValueError(f"Output file quá nhỏ hoặc không tồn tại ({dst.stat().st_size if dst.exists() else 0} bytes)")
+        out_size = dst.stat().st_size if dst.exists() else 0
+        if out_size < MIN_OUTPUT_SIZE:
+            raise ValueError(f"Output file quá nhỏ hoặc không tồn tại ({out_size} bytes)")
 
-        ratio = dst.stat().st_size / src_size * 100
+        ratio = out_size / src_size * 100
         with LOCK:
             print(f"    {G}✓ Done{RST}  {human_size(dst)}  {DIM}({ratio:.0f}% kích thước gốc, {elapsed:.1f}s){RST}")
         return {"src": src, "dst": dst, "status": "ok", "elapsed": elapsed, "ratio": ratio, "src_size": src_size}
+
+    except FileNotFoundError:
+        err = "Không tìm thấy lệnh ffmpeg (có thể đã bị gỡ giữa chừng)"
+        with LOCK:
+            print(f"    {R}✗ Lỗi:{RST} {err}")
+        return {"src": src, "dst": dst, "status": "error", "error": err}
 
     except subprocess.TimeoutExpired:
         err = f"Timeout sau {FFMPEG_TIMEOUT}s"
         with LOCK:
             print(f"    {R}✗ Lỗi:{RST} {err}")
         if dst.exists():
-            dst.unlink()
+            try:
+                dst.unlink()
+            except OSError:
+                pass
         return {"src": src, "dst": dst, "status": "error", "error": err}
 
     except (subprocess.CalledProcessError, ValueError) as e:
         if isinstance(e, subprocess.CalledProcessError):
-            err = e.stderr.decode(errors="replace").strip().splitlines()[-1] if e.stderr else "unknown"
+            lines = e.stderr.decode(errors="replace").strip().splitlines() if e.stderr else []
+            err = lines[-1] if lines else f"ffmpeg thoát với mã lỗi {e.returncode}"
         else:
             err = str(e)
         with LOCK:
             print(f"    {R}✗ Lỗi:{RST} {err}")
         if dst.exists():
-            dst.unlink()
+            try:
+                dst.unlink()
+            except OSError:
+                pass
+        return {"src": src, "dst": dst, "status": "error", "error": err}
+
+    except Exception as e:
+        # Bắt các lỗi không lường trước để 1 video lỗi không làm chết cả batch
+        err = f"Lỗi không xác định: {e}"
+        with LOCK:
+            print(f"    {R}✗ Lỗi:{RST} {err}")
+        if dst.exists():
+            try:
+                dst.unlink()
+            except OSError:
+                pass
         return {"src": src, "dst": dst, "status": "error", "error": err}
 
     finally:
@@ -221,48 +367,53 @@ def convert_video(src: Path, out_dir: Path, idx: int, total: int) -> dict:
 def main():
     banner()
 
-    # ── Kiểm tra ffmpeg ──
+    # ── Kiểm tra ffmpeg/ffprobe ──
     if not check_ffmpeg():
-        print(f"{R}✗ Không tìm thấy ffmpeg!{RST}")
         print(f"  Cài đặt: {Y}winget install ffmpeg{RST}  hoặc  {Y}choco install ffmpeg{RST}")
         sys.exit(1)
-    print(f"{G}✓ FFmpeg OK{RST}\n")
+    print(f"{G}✓ FFmpeg/FFprobe OK{RST}\n")
 
-    # ── Chọn thư mục input ──
-    default_input = Path(".")
-    raw = input(f"{W}📂 Thư mục chứa video {DIM}[Enter = thư mục hiện tại]{RST}: ").strip()
-    input_dir = Path(raw) if raw else default_input
-    if not input_dir.is_dir():
-        print(f"{R}✗ Không tìm thấy thư mục: {input_dir}{RST}")
-        sys.exit(1)
+    # ── Thư mục chứa video = thư mục chứa file script này ──
+    try:
+        input_dir = Path(__file__).resolve().parent
+    except (NameError, OSError):
+        input_dir = Path(".").resolve()
+    print(f"{W}📂 Thư mục quét video: {C}{input_dir}{RST}")
+
+    # ── Chọn độ phân giải đầu ra ──
+    target_height = choose_resolution()
 
     # ── Chọn thư mục output ──
-    default_out = input_dir / "720p_output"
-    raw2 = input(f"{W}💾 Thư mục lưu output {DIM}[Enter = {default_out.name}]{RST}: ").strip()
-    out_dir = Path(raw2) if raw2 else default_out
-    out_dir.mkdir(parents=True, exist_ok=True)
+    default_out = input_dir / f"{target_height}p_output"
+    raw = input(f"{W}💾 Thư mục lưu output {DIM}[Enter = {default_out.name}]{RST}: ").strip()
+    out_dir = Path(raw) if raw else default_out
+    try:
+        out_dir.mkdir(parents=True, exist_ok=True)
+    except OSError as e:
+        print(f"{R}✗ Không tạo được thư mục output {out_dir}: {e}{RST}")
+        sys.exit(1)
 
-    # ── Hỏi recursive ──
-    rec_ans = input(f"{W}🔍 Quét cả subfolder? {DIM}[y/N]{RST}: ").strip().lower()
-    recursive = rec_ans == "y"
-
-    # ── Scan video ──
-    videos = collect_videos(input_dir, recursive=recursive)
-
-    # Lọc bỏ các file nằm trong out_dir (tránh convert lại output cũ)
-    videos = [v for v in videos if out_dir not in v.parents and v.parent != out_dir]
+    # ── Scan video (chỉ thư mục hiện tại, không đệ quy) ──
+    videos = collect_videos(input_dir)
 
     if not videos:
         print(f"{Y}⚠  Không tìm thấy video nào trong: {input_dir}{RST}")
         sys.exit(0)
 
     print(f"\n{C}══ Tìm thấy {len(videos)} video ══{RST}")
+    resolutions: dict[Path, tuple[int, int]] = {}
     for v in videos:
         w, h = get_video_resolution(v)
-        tag   = f"{h}p" if h else "?"
-        arrow = f"  {B}→ 720p{RST}" if h > 720 else f"  {DIM}(đã ≤720p){RST}"
-        rel   = v.relative_to(input_dir) if recursive else Path(v.name)
-        print(f"  {DIM}•{RST} {rel}  {Y}[{tag}]{RST}{arrow}")
+        resolutions[v] = (w, h)
+        if not w or not h:
+            tag = "?"
+            arrow = f"  {R}(không đọc được độ phân giải){RST}"
+        else:
+            # Dùng cạnh ngắn để đánh giá — khớp với logic scale thật trong convert_video()
+            short_side = min(w, h)
+            tag = f"{w}×{h}"
+            arrow = f"  {B}→ {target_height}p{RST}" if short_side > target_height else f"  {DIM}(đã ≤{target_height}p){RST}"
+        print(f"  {DIM}•{RST} {v.name}  {Y}[{tag}]{RST}{arrow}")
 
     # ── Cảnh báo preset + workers ──
     if MAX_WORKERS > 1 and PRESET in ("slow", "veryslow"):
@@ -270,7 +421,8 @@ def main():
         print(f"   {DIM}Khuyến nghị: MAX_WORKERS=1 khi dùng slow/veryslow{RST}")
 
     # ── Xác nhận ──
-    print(f"\n{W}Workers song song: {C}{MAX_WORKERS}{RST}   "
+    print(f"\n{W}Độ phân giải: {C}{target_height}p{RST}   "
+          f"{W}Workers song song: {C}{MAX_WORKERS}{RST}   "
           f"{W}CRF: {C}{CRF}{RST}   {W}Preset: {C}{PRESET}{RST}   "
           f"{W}Codec: {C}{VIDEO_CODEC}{RST}   "
           f"{W}Timeout: {C}{FFMPEG_TIMEOUT}s/video{RST}")
@@ -286,11 +438,17 @@ def main():
 
     with ThreadPoolExecutor(max_workers=MAX_WORKERS) as ex:
         futures = {
-            ex.submit(convert_video, v, out_dir, i + 1, len(videos)): v
+            ex.submit(convert_video, v, out_dir, target_height, i + 1, len(videos), resolutions[v]): v
             for i, v in enumerate(videos)
         }
         for fut in as_completed(futures):
-            results.append(fut.result())
+            try:
+                results.append(fut.result())
+            except Exception as e:
+                # An toàn tuyệt đối: nếu 1 future ném exception ngoài dự kiến, không để cả batch chết
+                v = futures[fut]
+                print(f"  {R}✗ Lỗi không xác định với {v.name}: {e}{RST}")
+                results.append({"src": v, "dst": None, "status": "error", "error": str(e)})
 
     # ── Tổng kết ──
     total_time = time.time() - t_start
@@ -307,9 +465,12 @@ def main():
     if ok:
         avg_ratio = sum(r["ratio"] for r in ok) / len(ok)
         src_total = sum(r["src_size"] for r in ok)
-        dst_total = sum(r["dst"].stat().st_size for r in ok)
-        saved     = (src_total - dst_total) / 1024 / 1024
-        print(f"  {G}💾 Giảm dung lượng trung bình: {avg_ratio:.0f}% — tiết kiệm ~{saved:.1f} MB{RST}")
+        try:
+            dst_total = sum(r["dst"].stat().st_size for r in ok)
+            saved = (src_total - dst_total) / 1024 / 1024
+            print(f"  {G}💾 Giảm dung lượng trung bình: {avg_ratio:.0f}% — tiết kiệm ~{saved:.1f} MB{RST}")
+        except OSError:
+            print(f"  {G}💾 Giảm dung lượng trung bình: {avg_ratio:.0f}%{RST}")
 
     if errors:
         print(f"\n{R}Danh sách lỗi:{RST}")
