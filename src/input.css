@@ -76,19 +76,23 @@ iframe:focus-visible {
 
 /* ============ Card surface: glass blur + minimal bloom ============ */
 
-/* "Glass" card: translucent + blurred backdrop so whatever sits behind
-   the card (grid pattern, ambient glow, other cards) reads through it,
-   softened. Bloom itself is kept minimal and confined to a thin edge
-   glow on the card border, brightening slightly on hover. */
+/* "Glass" card, tối ưu cho hiệu năng render:
+   - Trạng thái tĩnh: chỉ dùng nền rgba đặc (0.85) để tạo cảm giác "kính tối",
+     KHÔNG bật backdrop-filter mặc định. backdrop-filter buộc trình duyệt
+     phải tạo một compositor layer riêng và blur lại toàn bộ nội dung phía
+     sau mỗi lần repaint/scroll — rất tốn với nhiều card cùng lúc trên trang.
+   - Blur chỉ bật khi hover (lúc người dùng thực sự tương tác với card),
+     và giảm cường độ (8px thay vì 16px) vì nền đã đủ đặc để không cần blur
+     mạnh mới đọc được chữ bên trên. Bloom viền vẫn giữ tối giản như cũ. */
 .card-surface {
     position: relative;
-    background: rgba(11, 15, 25, 0.62);
-    backdrop-filter: blur(16px) saturate(150%);
-    -webkit-backdrop-filter: blur(16px) saturate(150%);
+    background: rgba(11, 15, 25, 0.85);
     box-shadow: 0 0 0 1px rgba(99, 102, 241, 0.07), 0 0 10px -6px rgba(99, 102, 241, 0.35);
-    transition: box-shadow 0.4s ease;
+    transition: box-shadow 0.4s ease, backdrop-filter 0.4s ease;
 }
 .card-surface:hover {
+    backdrop-filter: blur(8px) saturate(150%);
+    -webkit-backdrop-filter: blur(8px) saturate(150%);
     box-shadow: 0 0 0 1px rgba(99, 102, 241, 0.14), 0 0 14px -5px rgba(99, 102, 241, 0.5);
 }
 /* Cyan variant, used in the Tools / Misc sections */
@@ -157,7 +161,15 @@ iframe:focus-visible {
 }
 
 .anim-header { animation: fadeSlideDown 0.9s cubic-bezier(0.16, 1, 0.3, 1) both; }
-.anim-ambient { animation: ambientDrift 14s ease-in-out infinite; }
+
+/* will-change chỉ đặt ở đây vì đây là phần tử duy nhất animate transform
+   liên tục (vô hạn) trên toàn trang; báo trước cho browser để nó tạo
+   compositor layer riêng, tránh repaint layout mỗi frame. Không đặt
+   will-change tràn lan ở các phần tử khác vì sẽ tốn bộ nhớ GPU vô ích. */
+.anim-ambient {
+    animation: ambientDrift 14s ease-in-out infinite;
+    will-change: transform;
+}
 
 .reveal-up {
     opacity: 0;
