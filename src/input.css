@@ -90,17 +90,9 @@ iframe:focus-visible {
     box-shadow: 0 0 0 1px rgba(99, 102, 241, 0.07), 0 0 10px -6px rgba(99, 102, 241, 0.35);
     transition: box-shadow 0.4s ease, backdrop-filter 0.4s ease;
 }
-.card-surface:hover {
-    backdrop-filter: blur(8px) saturate(150%);
-    -webkit-backdrop-filter: blur(8px) saturate(150%);
-    box-shadow: 0 0 0 1px rgba(99, 102, 241, 0.14), 0 0 14px -5px rgba(99, 102, 241, 0.5);
-}
 /* Cyan variant, used in the Tools / Misc sections */
 .card-surface.card-surface-cyan {
     box-shadow: 0 0 0 1px rgba(6, 182, 212, 0.07), 0 0 10px -6px rgba(6, 182, 212, 0.35);
-}
-.card-surface.card-surface-cyan:hover {
-    box-shadow: 0 0 0 1px rgba(6, 182, 212, 0.14), 0 0 14px -5px rgba(6, 182, 212, 0.5);
 }
 
 /* Minimal bloom on the small icon badge inside each card */
@@ -111,11 +103,29 @@ iframe:focus-visible {
 .icon-bloom-cyan {
     box-shadow: 0 0 8px -2px rgba(6, 182, 212, 0.45);
 }
-.group:hover .icon-bloom {
-    box-shadow: 0 0 10px -1px rgba(99, 102, 241, 0.6);
-}
-.group:hover .icon-bloom-cyan {
-    box-shadow: 0 0 10px -1px rgba(6, 182, 212, 0.6);
+
+/* Toàn bộ trạng thái :hover tự viết ở trên gom vào đây, bọc trong
+   (hover: hover) and (pointer: fine) - chỉ thiết bị có con trỏ thật
+   (chuột/trackpad) mới nhận :hover. Trên cảm ứng, tap sẽ KHÔNG còn kích
+   hoạt các trạng thái này, và sau khi nhấc ngón tay chúng cũng không bị
+   "kẹt" lại (sticky hover) như trước - đặc biệt quan trọng với
+   .card-surface:hover vì nó bật backdrop-filter, khá tốn hiệu năng để
+   giữ ở trạng thái "on" ngoài ý muốn trên di động. */
+@media (hover: hover) and (pointer: fine) {
+    .card-surface:hover {
+        backdrop-filter: blur(8px) saturate(150%);
+        -webkit-backdrop-filter: blur(8px) saturate(150%);
+        box-shadow: 0 0 0 1px rgba(99, 102, 241, 0.14), 0 0 14px -5px rgba(99, 102, 241, 0.5);
+    }
+    .card-surface.card-surface-cyan:hover {
+        box-shadow: 0 0 0 1px rgba(6, 182, 212, 0.14), 0 0 14px -5px rgba(6, 182, 212, 0.5);
+    }
+    .group:hover .icon-bloom {
+        box-shadow: 0 0 10px -1px rgba(99, 102, 241, 0.6);
+    }
+    .group:hover .icon-bloom-cyan {
+        box-shadow: 0 0 10px -1px rgba(6, 182, 212, 0.6);
+    }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -169,6 +179,23 @@ iframe:focus-visible {
 .anim-ambient {
     animation: ambientDrift 14s ease-in-out infinite;
     will-change: transform;
+}
+
+/* Trên mobile (<768px): bỏ hẳn animation vô hạn của nền ambient.
+   - Không dùng "prefers-reduced-motion" ở đây vì đây là vấn đề hiệu năng
+     (CPU/GPU yếu, dễ giật khi cuộn), không phải vấn đề accessibility -
+     áp dụng cho MỌI thiết bị mobile, không riêng người bật reduce motion.
+   - Giữ transform tĩnh translate(-50%, 0) scale(1) - đúng bằng trạng thái
+     0%/100% của keyframe ambientDrift - để phần tử vẫn được canh giữa
+     (do dùng left: 50%) thay vì bị lệch sang phải khi mất animation.
+   - will-change: auto để trình duyệt không tốn bộ nhớ giữ layer riêng
+     cho một phần tử không còn animate. */
+@media (max-width: 767px) {
+    .anim-ambient {
+        animation: none;
+        will-change: auto;
+        transform: translate(-50%, 0) scale(1);
+    }
 }
 
 .reveal-up {

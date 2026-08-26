@@ -41,7 +41,7 @@
     </noscript>
 
     <!-- Ambient Glowing Background Effect -->
-    <div class="anim-ambient fixed top-0 left-1/2 w-full max-w-7xl h-[350px] bg-gradient-to-b from-indigo-500/10 via-cyan-500/5 to-transparent blur-3xl pointer-events-none -z-10" aria-hidden="true"></div>
+    <div class="anim-ambient fixed top-0 left-1/2 w-full max-w-7xl h-[350px] bg-gradient-to-b from-indigo-500/10 via-cyan-500/5 to-transparent blur-xl md:blur-3xl pointer-events-none -z-10" aria-hidden="true"></div>
 
     <!-- Header Navigation -->
     <header class="anim-header border-b border-cardborder bg-darkbg/80 backdrop-blur-md sticky top-0 z-50">
@@ -392,12 +392,32 @@
         const TAB_IDS = ['downloads', 'games', 'markdown'];
         let currentTab = 'downloads';
 
+        // Chỉ tồn tại trên viewport >= sm (640px), trùng breakpoint Tailwind
+        // đang ẩn/hiện nav desktop ("hidden sm:flex"). Dùng để bỏ qua việc
+        // đọc/ghi layout của pill khi nó đang bị display:none trên mobile.
+        const desktopNavQuery = window.matchMedia('(min-width: 640px)');
+
         function moveDesktopIndicator(tabId) {
+            // Nav desktop đang ẩn (mobile) -> #tab-indicator không hiển thị,
+            // đọc offsetLeft/offsetWidth lúc này chỉ ép reflow vô ích.
+            if (!desktopNavQuery.matches) return;
+
             const indicator = document.getElementById('tab-indicator');
             const btn = document.getElementById(`btn-${tabId}`);
             if (!indicator || !btn) return;
-            indicator.style.left = btn.offsetLeft + 'px';
-            indicator.style.width = btn.offsetWidth + 'px';
+
+            // Tách pha ĐỌC (offsetLeft/offsetWidth) ra khỏi pha GHI
+            // (style.left/style.width). Đọc ngay ở đây (giá trị đã cần layout
+            // sẵn có từ frame trước), rồi dời việc ghi sang requestAnimationFrame
+            // kế tiếp. Nhờ vậy nếu hàm này được gọi liên tiếp (vd. nhiều sự
+            // kiện resize dồn dập khi xoay màn hình), các lần đọc/ghi không bị
+            // xen kẽ nhau gây Forced Synchronous Layout (layout thrashing).
+            const left = btn.offsetLeft;
+            const width = btn.offsetWidth;
+            requestAnimationFrame(() => {
+                indicator.style.left = left + 'px';
+                indicator.style.width = width + 'px';
+            });
         }
 
         function switchTab(tabId) {
@@ -486,9 +506,17 @@
             if (loader) loader.classList.add('is-hidden');
         }
 
-        // Đặt vị trí pill trượt ngay khi tải trang, và canh lại khi resize
+        // Đặt vị trí pill trượt ngay khi tải trang, và canh lại khi resize.
+        // Debounce 120ms vì "resize" có thể bắn liên tục hàng chục lần/giây
+        // trên mobile (thanh địa chỉ ẩn/hiện khi cuộn, bàn phím ảo đóng/mở,
+        // xoay màn hình) - không cần tính lại layout ở mỗi lần bắn, chỉ cần
+        // tính lại một lần sau khi kích thước đã ổn định.
         window.addEventListener('load', () => moveDesktopIndicator(currentTab));
-        window.addEventListener('resize', () => moveDesktopIndicator(currentTab));
+        let resizeDebounceTimer = null;
+        window.addEventListener('resize', () => {
+            clearTimeout(resizeDebounceTimer);
+            resizeDebounceTimer = setTimeout(() => moveDesktopIndicator(currentTab), 120);
+        }, { passive: true });
 
         // Hiệu ứng xuất hiện mượt mà khi cuộn tới các thẻ (card)
         const revealObserver = new IntersectionObserver((entries) => {
