@@ -21,14 +21,20 @@
     --header-text: #ffffff;
     --logo-icon: #4f46e5;
 
-    --btn-bg: #374151;
-    --btn-text: #f3f4f6;
-    --btn-hover-bg: #4b5563;
-    
-    --btn-active-bg: #4f46e5;
-    --btn-active-text: #ffffff;
-    --btn-primary-bg: #4f46e5;
-    --btn-primary-hover-bg: #4338ca;
+    /* Nút toolbar luôn nằm trên header tối ở cả 2 theme, nên dùng lớp phủ trắng
+       trong suốt (pattern "button on dark header" của GitHub) thay vì màu đặc.
+       Token giống hệt nhau ở light/dark: --btn-text bám theo --header-text. */
+    --btn-bg: rgba(255, 255, 255, 0.06);
+    --btn-bg-hover: rgba(255, 255, 255, 0.10);
+    --btn-bg-pressed: rgba(255, 255, 255, 0.03);
+    --btn-border: rgba(255, 255, 255, 0.14);
+    --btn-border-hover: rgba(255, 255, 255, 0.24);
+    --btn-text: var(--header-text);
+    --btn-accent: #6366f1;
+    --btn-active-bg: rgba(99, 102, 241, 0.22);
+    --btn-active-border: rgba(129, 140, 248, 0.55);
+    --btn-active-text: #c7d2fe;
+    --btn-focus-ring: rgba(99, 102, 241, 0.45);
 
     --pane-bg: #ffffff;
     --pane-header-bg: #f6f8fa;
@@ -44,9 +50,12 @@
 
     /* Tô màu cú pháp trong Editor */
     --md-header-marker: #8c959f;
-    --md-header-12: #0969da;
-    --md-header-34: #0550ae;
-    --md-header-56: #1f6feb;
+    --md-header-1: #063f8c;
+    --md-header-2: #0550ae;
+    --md-header-3: #0969da;
+    --md-header-4: #218bff;
+    --md-header-5: #54aeff;
+    --md-header-6: #91c9ff;
     --md-bold: #24292f;
     --md-italic: #24292f;
     --md-bolditalic: #24292f;
@@ -75,6 +84,21 @@
     --md-task-unchecked: #8c959f;
     --md-footnote: #8250df;
 
+    /* HTML inline elements */
+    --md-kbd: #57606a;
+    --md-kbd-bg: rgba(175, 184, 193, 0.2);
+    --md-mark-bg: #fff3bf;
+    --md-mark-text: #24292f;
+    --md-sup: #8250df;
+    --md-sub: #8250df;
+    --md-details: #9a6700;
+    --md-summary: #9a6700;
+    --md-table-separator: #6e7781;
+    --md-html-void: #8c959f;
+    --md-html-tag-marker: #8c959f;
+    --md-html-tag-content: #24292f;
+    --md-html-comment: #6e7781;
+
     /* GFM Alerts / Callouts (Preview) */
     --alert-note-color: #0969da;
     --alert-note-bg: rgba(9, 105, 218, 0.05);
@@ -101,15 +125,6 @@
     --header-text: #f0f6fc;
     --logo-icon: #818cf8;
 
-    --btn-bg: #21262d;
-    --btn-text: #e6edf3;
-    --btn-hover-bg: #30363d;
-    
-    --btn-active-bg: #6366f1;
-    --btn-active-text: #ffffff;
-    --btn-primary-bg: #6366f1;
-    --btn-primary-hover-bg: #4f46e5;
-
     --pane-bg: #0d1117;
     --pane-header-bg: #161b22;
     --pane-header-text: #8b949e;
@@ -123,9 +138,12 @@
     --toast-text: #f0f6fc;
 
     --md-header-marker: #8b949e;
-    --md-header-12: #58a6ff;
-    --md-header-34: #79c0ff;
-    --md-header-56: #a5d6ff;
+    --md-header-1: #388bfd;
+    --md-header-2: #58a6ff;
+    --md-header-3: #79c0ff;
+    --md-header-4: #a5d6ff;
+    --md-header-5: #c3e5ff;
+    --md-header-6: #e0f2ff;
     --md-bold: #c9d1d9;
     --md-italic: #c9d1d9;
     --md-bolditalic: #c9d1d9;
@@ -152,6 +170,21 @@
     --md-task-checked: #3fb950;
     --md-task-unchecked: #6e7681;
     --md-footnote: #d2a8ff;
+
+    /* HTML inline elements (dark) */
+    --md-kbd: #c9d1d9;
+    --md-kbd-bg: rgba(110, 118, 129, 0.4);
+    --md-mark-bg: #9a6700;
+    --md-mark-text: #f0f6fc;
+    --md-sup: #d2a8ff;
+    --md-sub: #d2a8ff;
+    --md-details: #d29922;
+    --md-summary: #d29922;
+    --md-table-separator: #6e7681;
+    --md-html-void: #8b949e;
+    --md-html-tag-marker: #8b949e;
+    --md-html-tag-content: #c9d1d9;
+    --md-html-comment: #6e7681;
 
     --alert-note-color: #58a6ff;
     --alert-note-bg: rgba(56, 139, 253, 0.15);
@@ -181,11 +214,11 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 10px 20px;
+    padding: 6px 16px;
     background-color: var(--header-bg);
     color: var(--header-text);
-    height: 60px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    height: 44px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
     transition: background-color 0.2s;
 }
 
@@ -200,44 +233,126 @@ body {
 }
 
 .logo h1 {
-    font-size: 1.2rem;
+    font-size: 1.05rem;
     font-weight: 600;
 }
 
 .toolbar {
     display: flex;
-    gap: 10px;
+    gap: 6px;
 }
 
 /* Buttons */
 .btn {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
-    background-color: var(--btn-bg);
-    color: var(--btn-text);
-    border: none;
-    padding: 8px 12px;
+    gap: 5px;
+    padding: 5px 12px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    line-height: 1;
     border-radius: 6px;
     cursor: pointer;
-    font-size: 0.85rem;
-    font-weight: 500;
-    transition: background-color 0.2s, color 0.2s;
+    border: 1px solid var(--btn-border);
+    background: var(--btn-bg);
+    color: var(--btn-text);
+    transition: background-color 0.2s, border-color 0.2s, color 0.2s;
 }
 
 .btn:hover {
-    background-color: var(--btn-hover-bg);
+    background: var(--btn-bg-hover);
+    border-color: var(--btn-border-hover);
 }
 
+.btn:active {
+    background: var(--btn-bg-pressed);
+}
+
+.btn:focus-visible {
+    outline: 2px solid var(--btn-focus-ring);
+    outline-offset: 2px;
+}
+
+/* Trạng thái bật (Sync Scroll ON): tint indigo thay vì đổ màu đặc */
 .btn.active {
-    background-color: var(--btn-active-bg);
+    background: var(--btn-active-bg);
+    border-color: var(--btn-active-border);
     color: var(--btn-active-text);
+}
+
+.btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
 }
 
 .btn i,
 .btn svg {
-    width: 16px;
-    height: 16px;
+    width: 14px;
+    height: 14px;
+}
+
+/* Nút Import + Dropdown Export */
+.export-wrap {
+    position: relative;
+    display: inline-flex;
+}
+
+.export-wrap .chevron {
+    transition: transform 0.15s;
+}
+
+.export-wrap.open .chevron {
+    transform: rotate(180deg);
+}
+
+.export-menu {
+    position: absolute;
+    top: calc(100% + 6px);
+    right: 0;
+    min-width: 180px;
+    display: flex;
+    flex-direction: column;
+    padding: 4px;
+    border: 1px solid var(--btn-border-hover);
+    border-radius: 8px;
+    background: var(--header-bg);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+    z-index: 500;
+}
+
+.export-menu.hidden {
+    display: none;
+}
+
+.export-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    border: none;
+    border-radius: 5px;
+    background: transparent;
+    color: var(--btn-text);
+    font-size: 0.8rem;
+    font-weight: 500;
+    font-family: inherit;
+    text-align: left;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background-color 0.15s;
+}
+
+.export-item:hover,
+.export-item:focus-visible {
+    background: var(--btn-bg-hover);
+    outline: none;
+}
+
+.export-item i,
+.export-item svg {
+    width: 15px;
+    height: 15px;
+    flex-shrink: 0;
 }
 
 /* Nút chuyển đổi giao diện Sáng / Tối */
@@ -257,7 +372,7 @@ body {
 .workspace {
     display: flex;
     flex: 1;
-    height: calc(100vh - 60px);
+    height: calc(100vh - 44px);
     overflow: hidden;
 }
 
@@ -269,6 +384,18 @@ body {
     overflow: hidden;
     background: var(--pane-bg);
     transition: background-color 0.2s;
+    /* Cách ly layout/paint của từng pane: khi Preview thay đổi DOM liên tục,
+       trình duyệt không cần tính lại layout/paint của phần còn lại của trang. */
+    contain: layout style paint;
+}
+
+@media print {
+    .pane,
+    #preview-pane,
+    .workspace {
+        contain: none !important;
+        overflow: visible !important;
+    }
 }
 
 .editor-pane {
@@ -277,12 +404,15 @@ body {
 
 .pane-header {
     background-color: var(--pane-header-bg);
-    padding: 8px 16px;
-    font-size: 0.75rem;
+    padding: 4px 16px;
+    font-size: 0.72rem;
+    line-height: 1.4;
     font-weight: 600;
+    letter-spacing: 0.04em;
     color: var(--pane-header-text);
     border-bottom: 1px solid var(--border-color);
     display: flex;
+    align-items: center;
     justify-content: space-between;
     transition: background-color 0.2s, color 0.2s, border-color 0.2s;
 }
@@ -305,9 +435,15 @@ body {
     height: 100%;
     padding: 20px;
     border: none;
-    font-family: 'Courier New', Courier, monospace;
-    font-size: 1rem;
-    line-height: 1.6;
+    /* Font monospace hiện đại: các họ font này đảm bảo độ rộng ký tự (advance width)
+       giống hệt nhau giữa chữ thường và chữ đậm (font-weight khác nhau), tránh lệch
+       vị trí giữa lớp textarea (trong suốt) và lớp tô màu bên dưới khi có đoạn in đậm. */
+    font-family: ui-monospace, "Cascadia Mono", "Consolas", "Liberation Mono", "SFMono-Regular", Menlo, monospace;
+    font-size: 16px;
+    line-height: 26px;
+    font-variant-ligatures: none;
+    font-kerning: none;
+    letter-spacing: normal;
     tab-size: 4;
     -moz-tab-size: 4;
     white-space: pre-wrap;
@@ -322,8 +458,9 @@ body {
     color: transparent;
     caret-color: var(--editor-caret);
     background-color: transparent;
-    overflow-y: auto;
+    overflow-y: scroll;
     scrollbar-gutter: stable;
+    overflow-anchor: none;
 }
 
 #markdown-input::placeholder {
@@ -334,13 +471,44 @@ body {
     background-color: var(--editor-selection);
 }
 
+#markdown-input::-webkit-scrollbar,
+#editor-highlight::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+#markdown-input::-webkit-scrollbar-track,
+#editor-highlight::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+#markdown-input::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 5px;
+}
+
+#markdown-input::-webkit-scrollbar-thumb:hover {
+    background: var(--text-muted);
+}
+
 #editor-highlight {
     z-index: 1;
-    overflow: hidden;
+    overflow-y: scroll;
     scrollbar-gutter: stable;
     pointer-events: none;
     user-select: none;
     color: var(--text-primary);
+    overflow-anchor: none;
+}
+
+#editor-highlight::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+#editor-highlight::-webkit-scrollbar-track,
+#editor-highlight::-webkit-scrollbar-thumb {
+    background: transparent;
 }
 
 #editor-highlight code {
@@ -359,9 +527,12 @@ body {
    ========================================================================== */
 .md-header-marker { color: var(--md-header-marker); font-weight: 600; }
 .md-header { font-weight: 700; }
-.md-header-1, .md-header-2 { color: var(--md-header-12); }
-.md-header-3, .md-header-4 { color: var(--md-header-34); }
-.md-header-5, .md-header-6 { color: var(--md-header-56); }
+.md-header-1 { color: var(--md-header-1); }
+.md-header-2 { color: var(--md-header-2); }
+.md-header-3 { color: var(--md-header-3); }
+.md-header-4 { color: var(--md-header-4); }
+.md-header-5 { color: var(--md-header-5); }
+.md-header-6 { color: var(--md-header-6); }
 
 .md-bold { color: var(--md-bold); font-weight: 700; }
 .md-italic { color: var(--md-italic); font-style: italic; }
@@ -392,7 +563,6 @@ body {
 .md-table-pipe { color: var(--md-table-pipe); }
 .md-math { color: var(--md-math); }
 
-/* Class màu cho cú pháp mới */
 .md-escape { color: var(--md-escape); font-weight: 600; }
 .md-ref-id { color: var(--md-ref-id); font-weight: 600; }
 .md-ref-title { color: var(--md-ref-title); font-style: italic; }
@@ -403,11 +573,49 @@ body {
 .md-footnote-marker, .md-footnote-id { color: var(--md-footnote); font-weight: 600; }
 .md-footnote-ref { color: var(--md-footnote); }
 
+/* HTML inline elements */
+.md-kbd-marker { color: var(--md-kbd); opacity: 0.7; }
+.md-kbd {
+    color: var(--md-kbd);
+    background-color: var(--md-kbd-bg);
+    border-radius: 3px;
+    padding: 0.1em 0.3em;
+    font-family: var(--editor-bg);
+    font-size: 0.9em;
+}
+
+.md-mark-marker { color: var(--md-mark-text); opacity: 0.7; }
+.md-mark {
+    background-color: var(--md-mark-bg);
+    color: var(--md-mark-text);
+    border-radius: 2px;
+    padding: 0.1em 0.2em;
+}
+
+.md-sup-marker, .md-sub-marker { color: var(--md-sup); opacity: 0.7; }
+.md-sup, .md-sub { color: var(--md-sup); }
+
+.md-details-marker { color: var(--md-details); font-weight: 600; }
+.md-summary-marker { color: var(--md-summary); font-weight: 600; }
+.md-table-separator { color: var(--md-table-separator); font-weight: 600; }
+.md-html-void { color: var(--md-html-void); font-weight: 600; }
+.md-html-tag-marker { color: var(--md-html-tag-marker); }
+.md-html-tag-content { color: var(--md-html-tag-content); }
+.md-html-comment { color: var(--md-html-comment); font-style: italic; }
+
 /* Preview Styling */
 #preview-output {
     flex: 1;
     padding: 20px 30px;
     overflow-y: auto;
+    /* Quan trọng: previewOutput.innerHTML được thay mới toàn bộ mỗi lần render (kèm theo
+       hljs, GFM alerts, icon Lucide được chèn/thay thế). script.js đã tự lưu và khôi phục
+       scrollTop một cách chính xác (xem renderMarkdown()/restorePreviewScrollTop()), nhưng
+       nếu để mặc định, trình duyệt sẽ áp dụng thêm cơ chế Scroll Anchoring của riêng nó lên
+       trên kết quả đó ở cuối mỗi khung hình. Hai cơ chế cộng dồn với nhau qua từng lần gõ
+       phím chính là nguyên nhân khiến Preview "trôi" dần lên trên. Tắt hẳn để script.js là
+       nơi duy nhất quyết định vị trí cuộn. */
+    overflow-anchor: none;
 }
 
 /* Toast Notification */
@@ -452,20 +660,30 @@ body {
     }
 
     .app-header {
-        padding: 8px 12px;
+        padding: 4px 10px;
+        height: 42px;
     }
     .toolbar {
-        gap: 5px;
+        gap: 4px;
     }
     .btn {
-        padding: 10px 12px;
+        min-width: 32px;
+        min-height: 32px;
+        padding: 0 8px;
         border-radius: 5px;
         gap: 0;
     }
     .btn i,
     .btn svg {
-        width: 19px;
-        height: 19px;
+        width: 16px;
+        height: 16px;
+    }
+
+    .export-menu {
+        min-width: 150px;
+    }
+    .export-item span {
+        display: inline;
     }
 }
 
