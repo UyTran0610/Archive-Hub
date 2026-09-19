@@ -6,7 +6,7 @@ Shadow Quality: Medium
 Global Illumination: Medium
 Visual Effects: Medium
 SFX Quality: Medium
-Environment Detail: Highest
+Environment Detail: High
 Anti-Aliasing: FSR 2.0
 
 Volumetric Fog: ON
@@ -17,4 +17,4 @@ Crowd Density: High
 Co-op Teammate Effects: Partially OFF
 Supserface Scattering: OFF
 Anisotropic Filtering: 16x
-Dynamic Character Resolution: ON
+Dynamic Character Resolution: OFF
